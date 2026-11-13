@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karácsonyi Túlélőközpont</title>
+<style>
+:root{--bg:#0f1a14;--card:#17261d;--line:#27402f;--txt:#f3efe6;--mut:#9fb3a5;--red:#e5484d;--grn:#3fb27f;--gold:#e9c46a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:5}
+header b{font-size:1.05rem}
+main{max-width:720px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:.2em 0}
+h2{font-size:1.15rem;margin:1.4em 0 .5em}
+.sub{color:var(--mut);margin:0 0 1em}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1}
+button,.btn{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font:inherit;cursor:pointer}
+button.pri{background:var(--red);border-color:var(--red);font-weight:600}
+button.on{background:var(--grn);border-color:var(--grn);color:#06130c;font-weight:600}
+button.sm{padding:4px 10px;font-size:.85rem}
+button:disabled{opacity:.5}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.8rem;font-weight:700}
+.alive{background:rgba(63,178,127,.18);color:var(--grn)}
+.dead{background:rgba(229,72,77,.18);color:var(--red)}
+.off{background:#222;color:var(--mut)}
+.mut{color:var(--mut);font-size:.9rem}
+input,select,textarea{width:100%;background:#0c140f;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;margin:4px 0 10px}
+label{font-size:.9rem;color:var(--mut)}
+.chk{display:flex;gap:8px;align-items:center;color:var(--txt);margin:6px 0}
+.chk input{width:auto;margin:0}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:14px;z-index:10;overflow:auto}
+.modal>div{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:440px;max-height:95vh;overflow:auto}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.num{font-size:1.7rem;font-weight:800}
+.bar{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.9rem}
+.bar span.l{width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar i{display:block;height:12px;background:var(--red);border-radius:6px;min-width:2px}
+.bar em{font-style:normal;color:var(--mut)}
+.err{color:var(--red);font-size:.9rem}
+.hide{display:none!important}
+.feed div{padding:8px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+</style>
+</head>
+<body>
+<header>
+  <b>🎄 Karácsonyi Túlélőközpont</b>
+  <div id="auth"></div>
+</header>
+<main>
+  <div id="setup" class="card hide"></div>
+  <h1>Christmas Survival Center <span class="mut">2026</span></h1>
+  <p class="sub">A túlélés nem magától értetődő. Három dal, három front, egyetlen cél.</p>
+  <div class="tabs"><button id="t1" class="pri">Játék</button><button id="t2">Statisztika</button></div>
+  <section id="v1"></section>
+  <section id="v2" class="hide"></section>
+  <p class="mut" style="margin-top:40px">Kecskeméti Fiatalok Társasága · a játék december 1-jén kezdődik, december 24-én éjfélkor ér véget.</p>
+</main>
+<div id="modal" class="modal hide"></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,FacebookAuthProvider,
+  createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,setDoc,updateDoc,deleteDoc,query,where,onSnapshot,
+  runTransaction,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ====== 1) IDE MÁSOLD A FIREBASE BEÁLLÍTÁST (Project settings → Web app) ====== */
+const firebaseConfig = {
+  apiKey: "IDE",
+  authDomain: "IDE.firebaseapp.com",
+  projectId: "IDE",
+  appId: "IDE"
+};
+/* ================================================================================ */
+
+const YEAR = 2026;
+const CH = {
+  mariah:{name:"Mariahrmageddon",song:"All I Want for Christmas Is You",artist:"Mariah Carey",tag:"#mariahrmageddon"},
+  wham:{name:"Whamageddon",song:"Last Christmas",artist:"Wham!",tag:"#whamageddon"},
+  feliz:{name:"Feliznavidageddon",song:"Feliz Navidad",artist:"José Feliciano",tag:"#feliznavidageddon"}
+};
+const KEYS = Object.keys(CH);
+const CIRC = ["Adventi vásár","Bevásárlóközpont / pláza","Üzlet / bolt","Rádió / televízió","Munkahely","Vendéglátóhely","Tömegközlekedés","Ismerősöknél / otthon","Egyéb"];
+const CITIES = ["Kecskemét","Budapest","Debrecen","Szeged","Miskolc","Pécs","Győr","Nyíregyháza","Székesfehérvár","Szombathely","Szolnok","Tatabánya","Érd","Kaposvár","Veszprém","Békéscsaba","Zalaegerszeg","Sopron","Eger","Nagykanizsa","Dunaújváros","Hódmezővásárhely","Salgótarján","Cegléd","Baja","Kiskunfélegyháza","Kiskunhalas","Nagykőrös","Lajosmizse","Tiszakécske","Izsák","Kerekegyháza","Szekszárd","Gyula","Esztergom","Gödöllő","Vác","Szentendre"];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = ts => ts ? ts.toDate().toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) : "";
+const localInput = d => {const p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;};
+
+if (firebaseConfig.apiKey === "IDE") {
+  $("#setup").classList.remove("hide");
+  $("#setup").innerHTML = "⚙️ <b>Beállítás szükséges:</b> a fájl elején cseréld ki a <code>firebaseConfig</code> értékeit a saját Firebase-projektedére.";
+}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let user=null, profile=null, isAdmin=false, users=[], elims=[], tab=1, ready=false;
+
+/* ---------- adatok ---------- */
+onSnapshot(collection(db,"users"), s=>{users=s.docs.map(d=>({id:d.id,...d.data()}));ready=true;render();}, e=>console.error(e));
+onSnapshot(query(collection(db,"eliminations"),where("year","==",YEAR)), s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}));render();}, e=>console.error(e));
+
+onAuthStateChanged(auth, async u=>{
+  user=u; profile=null; isAdmin=false;
+  if(u){
+    try{
+      const p=await getDoc(doc(db,"users",u.uid)); profile=p.exists()?p.data():null;
+      isAdmin=(await getDoc(doc(db,"admins",u.uid))).exists();
+    }catch(e){console.error(e)}
+  }
+  render();
+  if(u && !profile) onboarding();
+});
+
+/* ---------- megjelenítés ---------- */
+function render(){
+  $("#auth").innerHTML = user
+    ? `<span class="mut">${esc(profile?.nick||"")}</span> <button class="sm" id="out">Kilépés</button>`
+    : `<button class="sm pri" id="in">Belépés</button>`;
+  $("#out")?.addEventListener("click",()=>signOut(auth));
+  $("#in")?.addEventListener("click",loginModal);
+  $("#v1").classList.toggle("hide",tab!==1);
+  $("#v2").classList.toggle("hide",tab!==2);
+  $("#t1").className=tab===1?"pri":""; $("#t2").className=tab===2?"pri":"";
+  if(tab===1) renderGame(); else renderStats();
+}
+$("#t1").onclick=()=>{tab=1;render()};
+$("#t2").onclick=()=>{tab=2;render()};
+
+const myElim = c => elims.find(e=>e.uid===user?.uid && e.challenge===c);
+
+function renderGame(){
+  const el=$("#v1");
+  if(!user){
+    el.innerHTML=`<div class="card"><b>Csatlakozz a túlélőkhöz!</b><p class="mut">Válassz becenevet, jelöld, melyik frontokon harcolsz, és ha megtörténik a tragédia, egy gombnyomással jelentsd be.</p><button class="pri" id="in2">Belépés / regisztráció</button></div>`+
+      KEYS.map(k=>`<div class="card"><b>${CH[k].name}</b><div class="mut">${CH[k].artist}: ${CH[k].song}</div></div>`).join("");
+    $("#in2").onclick=loginModal; return;
+  }
+  if(!profile){el.innerHTML=`<div class="card">Add meg a becenevedet…</div>`;return;}
+  el.innerHTML=`<p>Szia, <b>${esc(profile.nick)}</b>!</p>`+KEYS.map(k=>{
+    const joined=(profile.challenges||[]).includes(k), e=myElim(k);
+    let right;
+    if(!joined) right=`<button class="sm on" data-join="${k}">Csatlakozom</button>`;
+    else if(e) right=`<span class="tag dead">KIESETT</span>`;
+    else right=`<span class="tag alive">TÚLÉLŐ</span>`;
+    let body="";
+    if(joined&&!e) body=`<button class="pri" style="width:100%;margin-top:10px" data-rep="${k}">Kiestem 💀</button>`;
+    if(e) body=`<div class="mut" style="margin-top:8px">${fmt(e.occurredAt)} · ${esc(e.settlement)}${e.place?", "+esc(e.place):""} · ${esc(e.circumstance)}</div>
+      <div style="margin-top:8px"><button class="sm" data-edit="${k}">Adatok szerkesztése</button> <button class="sm" data-share="${k}">Poszt szövege</button></div>`;
+    return `<div class="card"><div class="row"><div><b>${CH[k].name}</b><div class="mut">${CH[k].artist}: ${CH[k].song}</div></div>${right}</div>${body}</div>`;
+  }).join("");
+  el.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>reportModal(b.dataset.rep));
+  el.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>reportModal(b.dataset.edit,myElim(b.dataset.edit)));
+  el.querySelectorAll("[data-share]").forEach(b=>b.onclick=()=>shareModal(b.dataset.share));
+  el.querySelectorAll("[data-join]").forEach(b=>b.onclick=async()=>{
+    const c=[...new Set([...(profile.challenges||[]),b.dataset.join])];
+    await updateDoc(doc(db,"users",user.uid),{challenges:c}); profile.challenges=c; render();
+  });
+}
+
+function bars(map,max){
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(!arr.length) return `<div class="mut">Még nincs adat.</div>`;
+  const m=max||arr[0][1];
+  return arr.map(([l,n])=>`<div class="bar"><span class="l">${esc(l)}</span><i style="width:${Math.max(2,n/m*45)}%"></i><em>${n}</em></div>`).join("");
+}
+
+function renderStats(){
+  const el=$("#v2");
+  if(!ready){el.innerHTML="<p class='mut'>Betöltés…</p>";return;}
+  const per={}, byCh={}, byCity={}, byCirc={}, byDay={};
+  KEYS.forEach(k=>{per[k]={joined:0,out:0}});
+  const elimOf={};
+  elims.forEach(e=>{
+    (elimOf[e.uid]??=new Set()).add(e.challenge);
+    per[e.challenge]&&per[e.challenge].out++;
+    byCh[CH[e.challenge]?.name]=(byCh[CH[e.challenge]?.name]||0)+1;
+    const c=(e.settlement||"?").trim(); byCity[c]=(byCity[c]||0)+1;
+    byCirc[e.circumstance]=(byCirc[e.circumstance]||0)+1;
+    if(e.occurredAt){const d=e.occurredAt.toDate().toLocaleDateString("hu-HU",{month:"short",day:"numeric"});byDay[d]=(byDay[d]||0)+1;}
+  });
+  users.forEach(u=>(u.challenges||[]).forEach(k=>per[k]&&per[k].joined++));
+  const totalJoin=KEYS.reduce((a,k)=>a+per[k].joined,0), totalOut=KEYS.reduce((a,k)=>a+per[k].out,0);
+  const rate=totalJoin?Math.round((totalJoin-totalOut)/totalJoin*1000)/10:0;
+  const multi=Object.values(elimOf).filter(s=>s.size>=2).length;
+  const full=users.filter(u=>(u.challenges||[]).length===3 && !(elimOf[u.id]?.size))
+    .sort((a,b)=>(a.joinedAt?.seconds||0)-(b.joinedAt?.seconds||0));
+  const recent=[...elims].sort((a,b)=>(b.reportedAt?.seconds||0)-(a.reportedAt?.seconds||0)).slice(0,15);
+
+  el.innerHTML=`
+  <div class="grid">
+    <div class="card"><div class="num">${users.length}</div><div class="mut">regisztrált játékos</div></div>
+    <div class="card"><div class="num">${totalJoin-totalOut}</div><div class="mut">még játékban</div></div>
+    <div class="card"><div class="num">${totalOut}</div><div class="mut">kiesés</div></div>
+  </div>
+  <div class="card"><b>Túlélési arány:</b> ${rate}% <span class="mut">(front-részvételek alapján)</span><br><span class="mut">Több fronton is kiesett játékos: ${multi}</span></div>
+  <h2>Kiesések kihívásonként</h2><div class="card">${KEYS.map(k=>`<div class="bar"><span class="l">${CH[k].name}</span><i style="width:${per[k].joined?per[k].out/per[k].joined*45:0}%"></i><em>${per[k].out} / ${per[k].joined}</em></div>`).join("")}</div>
+  <h2>Napi kiesések</h2><div class="card">${bars(byDay)}</div>
+  <h2>Legveszélyesebb települések</h2><div class="card">${bars(byCity)}</div>
+  <h2>Legveszélyesebb helyzetek</h2><div class="card">${bars(byCirc)}</div>
+  <h2>Mindhárom fronton túlélők (${full.length})</h2>
+  <div class="card">${full.length?full.slice(0,40).map(u=>esc(u.nick)).join(" · "):"<span class='mut'>Még senki.</span>"}</div>
+  <h2>Hírfolyam</h2><div class="card feed">${recent.length?recent.map(e=>`<div>💀 <b>${esc(e.nick)}</b> kiesett a ${CH[e.challenge]?.name} kihívásból — ${esc(e.settlement)} (${esc(e.circumstance)}), ${fmt(e.occurredAt)}${e.story?`<div class="mut">„${esc(e.story)}”</div>`:""}${isAdmin?` <button class="sm" data-del="${e.id}">Törlés</button>`:""}</div>`).join(""):"<span class='mut'>Még nincs kiesés.</span>"}</div>`;
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{if(confirm("Biztosan törlöd ezt a bejelentést?"))await deleteDoc(doc(db,"eliminations",b.dataset.del));});
+}
+
+/* ---------- modálok ---------- */
+const modal=h=>{const m=$("#modal");m.innerHTML=`<div>${h}</div>`;m.classList.remove("hide");};
+const close=()=>$("#modal").classList.add("hide");
+
+function loginModal(){
+  modal(`<h2 style="margin-top:0">Belépés</h2>
+  <button style="width:100%;margin-bottom:8px" id="g">Belépés Google-lel</button>
+  <button style="width:100%;margin-bottom:14px" id="f">Belépés Facebookkal</button>
+  <div class="mut" style="margin-bottom:6px">vagy e-mail + jelszó:</div>
+  <input id="em" type="email" placeholder="e-mail"><input id="pw" type="password" placeholder="jelszó (min. 6 karakter)">
+  <div class="err" id="er"></div>
+  <div class="row"><button id="li" class="pri">Belépés</button><button id="re">Regisztráció</button><button id="x">Mégse</button></div>`);
+  const run=async fn=>{try{await fn();close()}catch(e){$("#er").textContent=msg(e)}};
+  $("#g").onclick=()=>run(()=>signInWithPopup(auth,new GoogleAuthProvider()));
+  $("#f").onclick=()=>run(()=>signInWithPopup(auth,new FacebookAuthProvider()));
+  $("#li").onclick=()=>run(()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value));
+  $("#re").onclick=()=>run(()=>createUserWithEmailAndPassword(auth,$("#em").value,$("#pw").value));
+  $("#x").onclick=close;
+}
+const msg=e=>({"auth/invalid-credential":"Hibás e-mail vagy jelszó.","auth/email-already-in-use":"Ez az e-mail már regisztrálva van.","auth/weak-password":"A jelszó legyen legalább 6 karakter.","auth/invalid-email":"Érvénytelen e-mail-cím."}[e.code]||("Hiba: "+(e.code||e.message)));
+
+function onboarding(){
+  modal(`<h2 style="margin-top:0">Üdv a túlélők között!</h2>
+  <label>Becenév (ez lesz a nyilvános neved)</label><input id="nick" maxlength="24" placeholder="pl. KarácsonyiMacska">
+  <label>Melyik frontokon harcolsz?</label>
+  ${KEYS.map(k=>`<label class="chk"><input type="checkbox" value="${k}" checked> ${CH[k].name} <span class="mut">(${CH[k].song})</span></label>`).join("")}
+  <p class="mut">Az e-mail-címed soha nem jelenik meg nyilvánosan. A statisztikákban a becenév látszik.</p>
+  <div class="err" id="er"></div><button class="pri" id="ok" style="width:100%">Indulhat a túlélés!</button>`);
+  $("#ok").onclick=async()=>{
+    const nick=$("#nick").value.trim(), low=nick.toLowerCase();
+    const chs=[...document.querySelectorAll("#modal input[type=checkbox]:checked")].map(c=>c.value);
+    if(nick.length<3) return $("#er").textContent="A becenév legalább 3 karakter legyen.";
+    if(!chs.length) return $("#er").textContent="Válassz legalább egy kihívást.";
+    try{
+      await runTransaction(db,async t=>{
+        const nr=doc(db,"nicknames",encodeURIComponent(low));
+        if((await t.get(nr)).exists()) throw new Error("taken");
+        t.set(nr,{uid:user.uid});
+        t.set(doc(db,"users",user.uid),{nick,nickLower:low,challenges:chs,joinedAt:serverTimestamp()});
+      });
+      profile={nick,challenges:chs}; close(); render();
+    }catch(e){$("#er").textContent=e.message==="taken"?"Ez a becenév már foglalt, válassz másikat.":msg(e)}
+  };
+}
+
+function reportModal(k,existing){
+  const e=existing||{};
+  modal(`<h2 style="margin-top:0">${existing?"Bejelentés szerkesztése":"Kiesés bejelentése"}: ${CH[k].name}</h2>
+  ${existing?"":`<p class="mut">A kiesés véglegesen rögzül, nem vonható vissza.</p>`}
+  <label>Mikor történt?</label><input id="when" type="datetime-local" value="${localInput(e.occurredAt?e.occurredAt.toDate():new Date())}">
+  <label>Település</label><input id="city" list="cl" value="${esc(e.settlement||"Kecskemét")}"><datalist id="cl">${CITIES.map(c=>`<option>${c}</option>`).join("")}</datalist>
+  <label>Helyszín (opcionális, pl. főtér)</label><input id="place" maxlength="60" value="${esc(e.place||"")}">
+  <label>Körülmény</label><select id="circ">${CIRC.map(c=>`<option ${c===e.circumstance?"selected":""}>${c}</option>`).join("")}</select>
+  <label>Hogyan történt a tragédia? (opcionális)</label><textarea id="story" rows="3" maxlength="300">${esc(e.story||"")}</textarea>
+  <div class="err" id="er"></div>
+  <div class="row"><button class="pri" id="ok">${existing?"Mentés":"Véglegesítem"}</button><button id="x">Mégse</button></div>`);
+  $("#x").onclick=close;
+  $("#ok").onclick=async()=>{
+    const when=new Date($("#when").value), city=$("#city").value.trim();
+    if(isNaN(when)) return $("#er").textContent="Add meg az időpontot.";
+    if(when>new Date(Date.now()+60000)) return $("#er").textContent="Jövőbeli időpont nem lehet.";
+    if(!city) return $("#er").textContent="A település kötelező.";
+    const data={settlement:city,place:$("#place").value.trim(),circumstance:$("#circ").value,story:$("#story").value.trim(),occurredAt:Timestamp.fromDate(when)};
+    try{
+      const ref=doc(db,"eliminations",`${user.uid}_${k}_${YEAR}`);
+      if(existing) await updateDoc(ref,data);
+      else await setDoc(ref,{...data,uid:user.uid,nick:profile.nick,challenge:k,year:YEAR,reportedAt:serverTimestamp()});
+      close(); if(!existing) setTimeout(()=>shareModal(k,data),300);
+    }catch(err){$("#er").textContent=msg(err)}
+  };
+}
+
+function shareModal(k,d){
+  const e=d||myElim(k); if(!e) return;
+  const t=e.occurredAt.toDate();
+  const text=`🖤 Szomorúan tudatom, hogy az Úr ${YEAR}. évében ${t.toLocaleDateString("hu-HU",{month:"long",day:"numeric"})} ${t.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}-kor kiestem a ${CH[k].name} kihíváson. (${e.settlement}${e.place?", "+e.place:""} – ${e.circumstance}) ${CH[k].tag}`;
+  modal(`<h2 style="margin-top:0">Poszt a közösségi oldalra</h2><textarea id="tx" rows="6">${esc(text)}</textarea>
+  <div class="row"><button class="pri" id="cp">Másolás</button><button id="x">Bezár</button></div>`);
+  $("#x").onclick=close;
+  $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText($("#tx").value);$("#cp").textContent="Másolva ✓"}catch{$("#tx").select()}};
+}
+</script>
+</body>
+</html>
