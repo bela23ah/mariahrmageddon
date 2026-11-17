@@ -6,7 +6,7 @@
 <title>Karácsonyi Túlélőközpont</title>
 <meta name="theme-color" content="#dcecf8">
 <meta name="description" content="Mariahrmageddon, Whamageddon, Feliznavidageddon – kiesésbejelentő és statisztika a Kecskeméti Fiatalok Társaságától.">
-<link rel="manifest" href="manifest_v5.webmanifest">
+<link rel="manifest" href="manifest_v6.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -153,6 +153,18 @@ details p{margin:0 0 12px}
 .arcade .ar{display:grid;grid-template-columns:2.2em 1fr auto 1.6em;gap:8px;padding:2px 0}
 .arcade .ar.me{color:#fff;background:rgba(255,255,255,.08);border-radius:6px}
 .arcade .an{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.cbar{position:relative;display:flex;height:24px;border-radius:12px;overflow:hidden;background:#fde2e5;border:1px solid var(--line)}
+.cbar .ca{display:block;background:linear-gradient(90deg,#2a9d6f,#5cc79a);min-width:2px}
+.cbar .co{display:block;background:#fde2e5}
+.cbar .goal{position:absolute;top:0;bottom:0;width:2px;background:#16324f}
+.cbar .goal em{position:absolute;top:-1px;left:5px;font-size:.68rem;font-style:normal;color:#16324f;font-weight:700;white-space:nowrap;line-height:24px;text-shadow:0 0 3px #fff,0 0 3px #fff}
+.verdict{border-radius:12px;padding:10px 12px;font-weight:700;margin-top:4px}
+.verdict.good{background:#e3f6ec;color:var(--grn)}
+.verdict.warn{background:#fff3e0;color:#b45309}
+.verdict.win{background:linear-gradient(90deg,#e3f6ec,#e6f2fb);color:var(--grn);text-align:center;font-size:1.05rem}
+.verdict.storm{background:linear-gradient(120deg,#fff1e8,#e3f0fb,#ffe3d6);color:#c2410c;text-align:center;font-size:1.05rem;animation:storm 2.5s ease-in-out infinite alternate}
+@keyframes storm{from{box-shadow:0 0 0 rgba(234,88,12,0)}to{box-shadow:0 0 18px rgba(234,88,12,.45)}}
 </style>
 </head>
 <body>
@@ -196,6 +208,7 @@ const FB_PAGE_URL  = "https://www.facebook.com/Kaefte";
 const FB_PAGE_SHOW = "facebook.com/Kaefte";
 const APP_URL      = "https://bela23ah.github.io/mariahrmageddon/";
 const VIDEO_URL    = "https://www.facebook.com/reel/1939111766651516";
+const WORKER_URL   = "https://polished-block-5c86.gyorgy-harkai.workers.dev";
 const MOTTO        = "A kihíváshoz sok sikert, kitartást, leleményt és persze jó szerencsét!";
 /* ================================================================================ */
 
@@ -304,6 +317,9 @@ async function cachedDoc(name,ttl){
 }
 async function loadConfig(){ const c=await cachedDoc("public",5*60e3); statsPublic=!!(c&&c.statsPublic); render(); }
 loadConfig();
+let COLL=null;
+async function loadCollective(){ const d=await cachedDoc("collective",10*60e3); COLL=d&&d.year===YEAR?d:null; render(); }
+loadCollective();
 const pendingTeamParam=new URLSearchParams(location.search).get("team");
 if(pendingTeamParam&&/^[A-Za-z0-9]{6}$/.test(pendingTeamParam)) ls.set("pendingTeam",pendingTeamParam.toUpperCase());
 
@@ -410,7 +426,7 @@ function viewHome(v){
   const stat = "";
   const cta = !user ? `<button class="pri wide" id="h-in">Belépek és játszom</button>` : `<button class="pri wide" id="h-go">Ugrás a játékhoz</button>`;
   v.innerHTML=`<div class="hero">${hero}<h1>Christmas Survival Center</h1><p class="count">${line}</p><p class="sub">Három dal. Három front. Egyetlen cél: túlélni.</p></div>${stat}
-  <div style="margin:10px 0">${cta}</div>${badgeHtml()}<div id="vbanner"></div><div id="inst"></div>
+  <div style="margin:10px 0">${cta}</div>${collectiveHtml()}${badgeHtml()}<div id="vbanner"></div><div id="inst"></div>
   <div class="card"><h3>Mi ez?</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátéka. December 1-jétől karácsony éjfélig próbáld elkerülni, hogy meghallgasd – <b>felismerd</b> – a három legismertebb karácsonyi dalt. Aki felismeri, kiesik, és ezt a telefonjáról egy koppintással jelentheti.</p>
   <p class="mut">${YEAR}-ben összesen ${total} évnyi karácsonyi zenei terror vár rád (${ages.join(" + ")} év).</p></div>
   <div class="card"><h3>A három front</h3>${KEYS.map(k=>`<div class="row" style="margin:8px 0"><span>${CH[k].ico} <b>${CH[k].name}</b></span><span class="mut">${CH[k].artist}: ${CH[k].song} (${YEAR-CH[k].rel} éves)</span></div>`).join("")}</div>
@@ -427,6 +443,27 @@ function viewHome(v){
   $("#h-rules").onclick=e=>{e.preventDefault();go("rules")};
   installBanner(); verifyBanner();
   $("#hfr")?.addEventListener("click",()=>openPage("teams"));
+  $("#cinv")?.addEventListener("click",()=>inviteSheet());
+}
+const GOAL=10;
+function collectiveHtml(){
+  const ph=phase();
+  if(!COLL||!COLL.reg) return `<div class="card"><h3>🌍 Össznépi cél</h3><p class="mut" style="margin:0">Ha a regisztráltak legalább ${GOAL}%-a túléli a Mariahrmageddont, kollektíve legyőzzük! Minél többen indulunk, annál jobb. Az állás hamarosan itt látszik.</p></div>`;
+  const reg=COLL.reg, alive=COLL.alive, pct=alive/reg*100, ok=pct>=GOAL, need=Math.max(0,Math.ceil((GOAL/100*reg-alive)/(1-GOAL/100)));
+  let verdict;
+  if(ph==="after") verdict=ok?`<div class="verdict win">🎉 Legyőztük a Mariahrmageddont! Kollektíve túléltük!</div>`:`<div class="verdict storm">🔥❄️ TÜZES HÓVIHAR MARIAHRMAGEDDON!<br><small>Nem értük el a ${GOAL}%-ot.</small></div>`;
+  else if(ph==="before") verdict=`<div class="mut">Eddig ${reg} regisztrált. Minél többen indulunk, annál nagyobb az esélyünk!</div>`;
+  else verdict=ok?`<div class="verdict good">✅ A cél felett vagyunk – tartsuk így!</div>`:`<div class="verdict warn">⚠️ A cél alatt vagyunk! Kb. ${need} új meghívott kellene a felhúzásunkhoz.</div>`;
+  return `<div class="card"><h3>🌍 Össznépi cél: a Mariahrmageddon legyőzése</h3>
+  <p class="mut" style="margin:0 0 8px">Ha a regisztráltak legalább <b>${GOAL}%-a</b> karácsonyig bent marad, kollektíve túléltük. Dec. 24-ig bármikor kicsúszhatunk alóla, de az új meghívottak felhúzhatnak minket.</p>
+  <div class="cbar"><i class="ca" style="width:${pct.toFixed(2)}%"></i><i class="co" style="width:${(100-pct).toFixed(2)}%"></i><span class="goal" style="left:${GOAL}%"><em>${GOAL}% cél</em></span></div>
+  <div class="row" style="margin:6px 0"><span>🟢 Bent van: <b>${alive}</b> (${pct.toFixed(1).replace(".",",")}%)</span><span>🔴 Kiesett: <b>${reg-alive}</b></span></div>
+  ${verdict}${ph!=="after"?`<button class="sm pri" id="cinv" style="margin-top:8px">👥 Hívj meg még valakit!</button>`:""}
+  <p class="mut" style="margin:8px 0 0;font-size:.8rem">Állapot: ${stamp(COLL.t)} (kb. óránként frissül)</p></div>`+townsHtml();
+}
+function townsHtml(){
+  const list=(COLL?.towns||[]).filter(t=>t.n>=3).sort((a,b)=>(b.a/b.n)-(a.a/a.n)||b.n-a.n).slice(0,8);
+  return `<div class="card"><h3>🏘️ Települések versenye</h3>${list.length?list.map((t,i)=>`<div class="bar"><span class="l">${i+1}. ${esc(t.l)}</span><i style="width:${Math.max(2,t.a/t.n*45)}%"></i><em>${t.a}/${t.n} (${Math.round(t.a/t.n*100)}%)</em></div>`).join(""):`<p class="mut" style="margin:0">Itt a településenként még bent lévők aránya látszik (legalább 3 játékos). Add meg a lakóhelyed a Profilodban, hogy a te városod is versenyezzen!</p>`}</div>`;
 }
 function badgeHtml(){
   if(!user||!myPart) return `<div class="card row"><div><b>👥 Versenyezz a barátaiddal!</b><div class="mut">Hívd meg őket, és nézzétek meg, ki éli túl tovább.</div></div><button class="sm" id="hfr">Barátok</button></div>`;
@@ -683,12 +720,14 @@ function pageProfile(b){
   ${myPart.mode==="classic"?(noElim?`<button class="sm" id="todh">Váltás Die Hard módra</button><p class="mut">Csak addig lehetséges, amíg nem estél ki sehol.</p>`:`<p class="mut">Kiesés után a mód már nem váltható.</p>`):""}
   <label class="chk" style="margin-top:10px"><input type="checkbox" id="pub" ${myPart.publicProfile?"checked":""}> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
   <label class="chk"><input type="checkbox" id="remt" ${rem?.optIn?"checked":""}> <span>📧 „Élsz még?” e-mail emlékeztető, ha 3 napig nem lépek be</span></label><div class="err" id="perr"></div></div>
+  <div class="card"><h3>🏘️ Lakóhely</h3><p class="mut" style="margin:0 0 6px">A települések versenyében számítunk (csak összesítve látszik, a neved nem).</p><input id="homep" list="clh2" maxlength="60" value="${esc(myPart.home||"")}" placeholder="pl. Kecskemét"><datalist id="clh2">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist><button class="sm" id="homes">Mentés</button></div>
   <div class="card"><button class="wide" id="lo">Kilépés</button></div>
   <div class="card"><h3>Adataim</h3><p class="mut">Ha törlöd a fiókodat, a profilod, a részvételeid, a kiesés-bejelentéseid, a ranglista-eredményed és az emlékeztető-beállításod végleg törlődik, és kilépsz a csapatokból.</p><button class="wide" id="del" style="color:var(--red)">Fiókom és adataim törlése</button></div>`;
   $("#todh")?.addEventListener("click",async()=>{ if(!confirm("Biztosan Die Hard módra váltasz? Mindhárom fronton egyszerre indulsz."))return;
     try{await updateDoc(doc(db,"participations",myPart.id),{mode:"diehard",challenges:KEYS})}catch(e){$("#perr").textContent=msg(e)} });
   $("#pub").onchange=async e=>{ try{ await updateDoc(doc(db,"participations",myPart.id),{publicProfile:e.target.checked,nick:e.target.checked?userDoc.nick:"Rejtőzködő túlélő"}) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
   $("#remt").onchange=async e=>{ try{ await setReminder(e.target.checked) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
+  $("#homes").onclick=async()=>{ try{ await updateDoc(doc(db,"participations",myPart.id),{home:$("#homep").value.trim().slice(0,60)}); $("#homes").textContent="Mentve ✓" }catch(err){$("#perr").textContent=msg(err)} };
   $("#lo").onclick=async()=>{await signOut(auth);closePage()};
   $("#del").onclick=deleteAccount;
 }
@@ -730,7 +769,7 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v5 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v6 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
@@ -764,12 +803,19 @@ function buildMapSnap(){
   });
   return {year:YEAR,t:Date.now(),cells:Object.values(g),dz};
 }
+function buildCollective(){
+  const out=new Set(AD.elims.filter(e=>e.challenge==="mariah").map(e=>e.uid)), towns={};
+  AD.parts.forEach(p=>{ const h=(p.home||"").trim(); if(!h) return; const o=(towns[h.toLowerCase()]??={l:h,n:0,a:0}); o.n++; if(!out.has(p.uid)) o.a++; });
+  return {year:YEAR,t:Date.now(),reg:AD.parts.length,alive:AD.parts.filter(p=>!out.has(p.uid)).length,towns:Object.values(towns).sort((a,b)=>b.n-a.n).slice(0,40)};
+}
 async function publishSnapshots(){
   if(!isAdmin||!AD.loaded) return;
   const {_elimOf,_dh,...snap}=summarize();
   await setDoc(doc(db,"config","statsSnapshot"),snap);
   await setDoc(doc(db,"config","mapSnapshot"),buildMapSnap());
-  ls.set("snap_mapSnapshot"+YEAR,null); ls.set("snap_statsSnapshot"+YEAR,null);
+  await setDoc(doc(db,"config","collective"),buildCollective());
+  ls.set("snap_mapSnapshot"+YEAR,null); ls.set("snap_statsSnapshot"+YEAR,null); ls.set("snap_collective"+YEAR,null);
+  loadCollective();
 }
 const bars=arr=>{ if(!arr||!arr.length) return `<div class="mut">Még nincs adat.</div>`; const m=arr[0].n; return arr.map(({l,n})=>`<div class="bar"><span class="l">${esc(l)}</span><i style="width:${Math.max(2,n/m*45)}%"></i><em>${n}</em></div>`).join(""); };
 function dailyChart(daily){
@@ -881,6 +927,7 @@ function onboarding(){
   <div class="mode-grid"><button type="button" class="mode-card active" data-m="classic"><b>🎄 Hagyományos</b><span>Mariahrmageddonnal indulsz; kiesés után jön a Wham, majd a Feliz.</span></button>
   <button type="button" class="mode-card" data-m="diehard"><b>🔥 Die Hard</b><span>Mindhárom fronton egyszerre indulsz.</span></button></div>
   <label class="chk"><input type="checkbox" id="pubp" checked> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
+  <label>Lakóhely (település, nem kötelező – a települések versenyéhez)</label><input id="homet" list="clh" maxlength="60" placeholder="pl. Kecskemét"><datalist id="clh">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
   <label class="chk"><input type="checkbox" id="remb"> <span>📧 Küldjetek „Élsz még?” emlékeztetőt, ha 3 napig nem lépek be</span></label>
   <p class="mut">Az e-mail-címed soha nem jelenik meg nyilvánosan.</p>
   <div class="err" id="er"></div>
@@ -890,7 +937,7 @@ function onboarding(){
   $("#ok").onclick=async()=>{
     const nick=userDoc?userDoc.nick:$("#nick").value.trim(), key=userDoc?userDoc.nickKey:slug(nick);
     if(nick.length<3||key.length<3) return $("#er").textContent="A becenév legalább 3 (betű vagy szám) karakter legyen.";
-    const pub=$("#pubp").checked, wantRem=$("#remb").checked, chs=mode==="diehard"?[...KEYS]:["mariah"];
+    const pub=$("#pubp").checked, wantRem=$("#remb").checked, homeV=$("#homet").value.trim().slice(0,60), chs=mode==="diehard"?[...KEYS]:["mariah"];
     try{
       await runTransaction(db,async t=>{
         if(!userDoc){
@@ -899,7 +946,7 @@ function onboarding(){
           t.set(nr,{uid:user.uid});
           t.set(doc(db,"users",user.uid),{nick,nickKey:key,createdAt:serverTimestamp()});
         }
-        t.set(doc(db,"participations",`${YEAR}_${user.uid}`),{uid:user.uid,year:YEAR,nick:pub?nick:"Rejtőzködő túlélő",mode,challenges:chs,publicProfile:pub,joinedAt:serverTimestamp()});
+        t.set(doc(db,"participations",`${YEAR}_${user.uid}`),{uid:user.uid,year:YEAR,nick:pub?nick:"Rejtőzködő túlélő",mode,challenges:chs,publicProfile:pub,...(homeV?{home:homeV}:{}),joinedAt:serverTimestamp()});
       });
       userDoc=userDoc||{nick,nickKey:key}; closeModal(); render(); if(wantRem) setReminder(true).catch(console.error); setTimeout(checkPendingTeam,800);
     }catch(e){$("#er").textContent=e.message==="taken"?"Ez a becenév már foglalt, válassz másikat.":msg(e)}
@@ -1164,7 +1211,71 @@ function pageTeams(b){
   b.querySelectorAll("[data-leave]").forEach(x=>x.onclick=async()=>{ const t=TEAMS.find(q=>q.id===x.dataset.leave); try{ await leaveTeam(t) }catch(e){ alert(msg(e)) } });
 }
 
-/* ---------- Mini játék: Fülvédő futam 2.0 ---------- */
+/* ---------- Mini játék: Fülvédő futam 3.0 (a szerver ellenőrzi az eredményt) ---------- */
+/* ===== MINIJÁTÉK-MAG: determinisztikus, rögzített időlépésű (1/30 s) szimuláció. A böngésző és a szerver (worker) ugyanezt a kódot futtatja. ===== */
+function mkSim(seed,T,noDeath){
+  let a=seed>>>0;
+  const rnd=()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};
+  const W=360,GY=196,DT=1/30;
+  const P={x:60,y:GY,vy:0,crouch:false,jumps:0,inv:0}, K={l:false,r:false,d:false};
+  const S={frame:0,t:0,waves:[],gifts:[],spawn:1.2,giftT:9+rnd()*6,over:false,won:false,shield:T>=4?1:0,slow:0,fast:0,freeze:0,dashCd:0,freezeCd:0,mouth:0,msg:"",msgT:0};
+  const say=m=>{S.msg=m;S.msgT=2};
+  const cl=(x,lo,hi)=>Math.min(hi,Math.max(lo,x));
+  function input(c){
+    if(S.over) return;
+    switch(c){
+      case 0:K.l=true;break; case 1:K.l=false;break; case 2:K.r=true;break; case 3:K.r=false;break; case 4:K.d=true;break; case 5:K.d=false;break;
+      case 6: if(P.y>=GY-0.5&&!P.crouch){P.vy=-440;P.jumps=1} else if(T>=1&&P.jumps<2&&P.y<GY-0.5){P.vy=-400;P.jumps=2} break;
+      case 7: if(T>=2&&S.dashCd<=0){P.inv=0.5;S.dashCd=6;say("⚡ Kitörés!")} break;
+      case 8: if(T>=3&&S.freezeCd<=0){S.freeze=2;S.freezeCd=14;say("🕶️ Megállítottad a hangokat!")} break;
+    }
+  }
+  const spawnWave=d=>{
+    const mk=(type,dx)=>S.waves.push(type==="low"?{x:W-40+dx,y:GY-26,w:30,h:26,type}:{x:W-40+dx,y:GY-58,w:30,h:26,type});
+    const r=rnd(); mk(rnd()<0.5?"low":"high",0);
+    if(d>6&&r<0.25) mk(rnd()<0.5?"low":"high",95);
+    if(d>14&&r<0.12) mk("low",190);
+  };
+  const gift=()=>{ const r=rnd();
+    if(r<0.3){S.shield=Math.min(2,S.shield+1);say("🛡️ Pajzs!")}
+    else if(r<0.55){S.slow=6;say("🐌 Lassítás 6 mp-re")}
+    else if(r<0.8){S.t+=30;say("🎅 Fél nap ajándékba!")}
+    else {S.fast=5;say("🔔 Csengőszó: gyorsulás!")} };
+  const hit=w=>{ const ph=P.crouch?24:44, px=P.x+3, pw=16, py=P.y-ph+3, pH=ph-6; return px<w.x+w.w-3&&px+pw>w.x+3&&py<w.y+w.h-3&&py+pH>w.y+3; };
+  function step(){
+    if(S.over) return;
+    S.frame++; S.t+=DT; const d=S.t/60;
+    if(d>=24){S.over=true;S.won=true;return}
+    P.crouch=K.d&&P.y>=GY-0.5;
+    if(K.l)P.x-=140*DT; if(K.r)P.x+=140*DT; P.x=cl(P.x,10,150);
+    P.vy+=1300*DT; P.y+=P.vy*DT; if(P.y>=GY){P.y=GY;P.vy=0;P.jumps=0}
+    S.dashCd=Math.max(0,S.dashCd-DT); S.freezeCd=Math.max(0,S.freezeCd-DT); P.inv=Math.max(0,P.inv-DT);
+    S.slow=Math.max(0,S.slow-DT); S.fast=Math.max(0,S.fast-DT); S.freeze=Math.max(0,S.freeze-DT); S.msgT=Math.max(0,S.msgT-DT);
+    let speed=(150+d*9)*(1+T*0.04); if(S.slow>0)speed*=0.6; if(S.fast>0)speed*=1.35; if(S.freeze>0)speed=0;
+    if(S.freeze<=0) S.spawn-=DT;
+    if(S.spawn<=0){ spawnWave(d); S.spawn=Math.max(0.5,1.7-d*0.045-T*0.03)+rnd()*0.6; S.mouth=0.35; }
+    S.mouth=Math.max(0,S.mouth-DT);
+    S.giftT-=DT; if(S.giftT<=0){ S.gifts.push({x:W-30,y:rnd()<0.5?GY-22:GY-72,w:20,h:20}); S.giftT=10+rnd()*10; }
+    const ws=S.waves; let k=0; for(let i=0;i<ws.length;i++){ const w=ws[i]; w.x-=speed*DT; if(w.x>-50) ws[k++]=w; } while(ws.length>k)ws.pop();
+    const ph=P.crouch?24:44, gs=S.gifts; k=0;
+    for(let i=0;i<gs.length;i++){ const g=gs[i]; g.x-=speed*DT; if(g.x<=-30) continue;
+      if(P.x+3<g.x+g.w&&P.x+19>g.x&&P.y-ph<g.y+g.h&&P.y>g.y){ gift(); continue } gs[k++]=g; } while(gs.length>k)gs.pop();
+    if(P.inv<=0&&!noDeath){ let hw=null; for(let i=0;i<S.waves.length;i++){ if(hit(S.waves[i])){hw=S.waves[i];break} } if(hw){ if(S.shield>0){ S.shield--; S.waves=S.waves.filter(w=>w!==hw); say("🛡️ A pajzs megvédett!"); } else { S.over=true; S.won=false; } } }
+  }
+  return {P,S,K,input,step,DT};
+}
+function simDays(S){ return Math.round(Math.min(24,S.t/60)*100)/100; }
+/* a szerver ezzel ellenőrzi a beküldött futást: log = [képkocka, kód, képkocka, kód, ...] */
+function replayRun(seed,T,log,maxF){
+  const sim=mkSim(seed,T,false); let i=0;
+  for(let f=0;f<45000;f++){
+    while(i<log.length&&log[i]===sim.S.frame){ sim.input(log[i+1]); i+=2; }
+    sim.step();
+    if(sim.S.over) return {over:true,won:sim.S.won,days:simDays(sim.S),frames:sim.S.frame,unused:i<log.length};
+  }
+  return {over:false};
+}
+
 let G=null, LB={t:0,rows:null};
 const IC={
  left:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>', right:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
@@ -1180,15 +1291,23 @@ function pageMini(b){
   <canvas id="gc" width="360" height="240"></canvas>
   <div class="pad"><button class="gbtn" id="bl" aria-label="balra">${IC.left}</button><button class="gbtn" id="br" aria-label="jobbra">${IC.right}</button><button class="gbtn" id="bu" aria-label="ugrás">${IC.up}</button><button class="gbtn" id="bd" aria-label="lebújás">${IC.down}</button></div>
   <div class="pad2"><button class="gbtn ab" id="ba">${IC.bolt}<small>Kitörés (E)</small></button><button class="gbtn ab" id="bf">${IC.time}<small>Időlassítás (Q)</small></button></div>
-  <p class="mut" style="margin:0 0 6px"><span id="gbest"></span></p>
-  <details><summary>Jelvények és képességek</summary><p class="mut">${TIERS.map((x,i)=>`${x[1]} <b>${x[0]}</b>: ${["alap","dupla ugrás (levegőben még egyszer ▲)","kitörés ⚡: rövid sebezhetetlenség","időlassítás ⏱: megállítja a hanghullámokat 2 mp-re","induló pajzs"][i]}`).join("<br>")}<br>A magasabb szint nehezebb, gyorsabb játékot is jelent. Gyakorló módban minden képességet kipróbálhatsz (nincs ranglista).</p></details>
+  <p class="mut" style="margin:0 0 4px"><span id="gbest"></span></p><p class="mut" style="margin:0 0 6px" id="gstat"></p>
+  <details><summary>Jelvények és képességek</summary><p class="mut">${TIERS.map((x,i)=>`${x[1]} <b>${x[0]}</b>: ${["alap","dupla ugrás (levegőben még egyszer ▲)","kitörés ⚡: rövid sebezhetetlenség","időlassítás ⏱: megállítja a hanghullámokat 2 mp-re","induló pajzs"][i]}`).join("<br>")}<br>A magasabb szint nehezebb, gyorsabb játékot is jelent. Gyakorló módban minden képességet kipróbálhatsz (nincs ranglista).<br><b>Hitelesítés:</b> a ranglistára kerülő futamot a szerver lejátssza és ellenőrzi, kamu eredményt nem fogad el.</p></details>
   <h3>🏆 Ranglista</h3><div id="lb" class="arcade"><div class="mut">Betöltés…</div></div>`;
   const cv=$("#gc"), go=()=>startGame(cv,t,$("#prac").checked);
   $("#prac").onchange=go; go(); loadLb();
 }
-async function saveScore(d,T){
-  if(!user||!myPart) return;
-  try{ await setDoc(doc(db,"games",String(YEAR),"scores",user.uid),{nick:myPart.nick,days:d,tier:T,updatedAt:serverTimestamp()}); LB.t=0; loadLb(); }catch(e){}
+async function submitRun(seed,T,log){
+  const set=t=>{const e=$("#gstat"); if(e) e.textContent=t};
+  if(!user||!myPart){ set("Lépj be, hogy az eredményed felkerüljön a ranglistára."); return }
+  set("Eredmény ellenőrzése a szerveren…");
+  try{
+    const tok=await user.getIdToken();
+    const r=await fetch(WORKER_URL+"/score",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+tok},body:JSON.stringify({year:YEAR,seed,tier:T,log})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok&&j.ok){ set(j.kept?"Ellenőrizve ✓ – a ranglistán a korábbi, jobb eredményed marad.":`Ellenőrizve és rögzítve ✓ ${Number(j.days).toFixed(2).replace(".",",")} nap`); LB.t=0; loadLb(); }
+    else set("A szerver nem fogadta el: "+(j.error||("hiba "+r.status)));
+  }catch(e){ set("A ranglista-szerver most nem érhető el, az eredmény nem került fel."); }
 }
 async function loadLb(){
   let el=$("#lb"); if(!el) return;
@@ -1203,84 +1322,65 @@ async function loadLb(){
 function startGame(cv,tier,practice){
   stopGame();
   const T=practice?4:tier, ctx=cv.getContext("2d"), W=360, H=240, GY=196;
-  const P={x:60,y:GY,vy:0,crouch:false,jumps:0,inv:0}, K={l:false,r:false,d:false};
-  const fresh=()=>({t:0,waves:[],notes:[],gifts:[],spawn:1.2,giftT:9+Math.random()*6,over:false,won:false,shield:T>=4?1:0,slow:0,fast:0,freeze:0,dashCd:0,freezeCd:0,mouth:0,msg:"",msgT:0,fin:0});
-  let S=fresh();
-  const day=()=>S.t/60, say=m=>{S.msg=m;S.msgT=2};
+  let sim, log, pend, notes, acc=0, finished=false, overAt=0, seed=0;
+  const held={l:false,r:false,d:false}, CODES={l:[0,1],r:[2,3],d:[4,5]};
   const best=()=>ls.get("bestd"+YEAR,0);
   const bestEl=()=>{const e=$("#gbest");if(e)e.textContent=best()?`Saját rekord: ${best().toFixed(2).replace(".",",")} nap`:""};
-  bestEl();
-  $("#ba")?.classList.toggle("lockd",T<2); $("#bf")?.classList.toggle("lockd",T<3);
-  const reset=()=>{ S=fresh(); P.x=60;P.y=GY;P.vy=0;P.crouch=false;P.jumps=0;P.inv=0; };
-  const jump=()=>{ if(S.over){ if(S.fin>0.4) reset(); return }
-    if(P.y>=GY-0.5&&!P.crouch){P.vy=-440;P.jumps=1} else if(T>=1&&P.jumps<2&&P.y<GY-0.5){P.vy=-400;P.jumps=2} };
-  const dash=()=>{ if(S.over||T<2||S.dashCd>0) return; P.inv=0.5; S.dashCd=6; say("⚡ Kitörés!") };
-  const freeze=()=>{ if(S.over||T<3||S.freezeCd>0) return; S.freeze=2; S.freezeCd=14; say("🕶️ Megállítottad a hangokat!") };
-  const finish=won=>{ if(S.over) return; S.over=true; S.won=won; S.fin=0;
-    const d=Math.round(Math.min(24,day())*100)/100;
-    if(d>best()){ ls.set("bestd"+YEAR,d); bestEl(); if(!practice) saveScore(d,T); } };
-  const spawnWave=d=>{
-    const mk=(type,dx)=>S.waves.push(type==="low"?{x:W-40+dx,y:GY-26,w:30,h:26,type}:{x:W-40+dx,y:GY-58,w:30,h:26,type});
-    const r=Math.random(); mk(Math.random()<0.5?"low":"high",0);
-    if(d>6&&r<0.25) mk(Math.random()<0.5?"low":"high",95);
-    if(d>14&&r<0.12) mk("low",190);
+  const setStat=t=>{const e=$("#gstat");if(e)e.textContent=t};
+  const newRun=()=>{ seed=crypto.getRandomValues(new Uint32Array(1))[0]; sim=mkSim(seed,T,false); log=[]; pend=[]; notes=[]; finished=false; held.l=held.r=held.d=false; setStat(practice?"Gyakorló mód – nincs ranglista.":""); };
+  const act=c=>{ if(sim.S.over) return; pend.push(c); log.push(sim.S.frame,c); };
+  const setHeld=(n,on)=>{ if(held[n]===on) return; held[n]=on; act(CODES[n][on?0:1]); };
+  const jump=()=>{ if(sim.S.over){ restart(); return } act(6); };
+  const restart=()=>{ if(sim.S.over&&performance.now()-overAt>400) newRun(); };
+  const onOver=()=>{
+    finished=true; overAt=performance.now();
+    const days=simDays(sim.S), prev=best();
+    if(days>prev){ ls.set("bestd"+YEAR,days); bestEl(); if(!practice&&days>=0.02) submitRun(seed,T,log); }
+    else if(!practice) setStat("Ez nem volt jobb a saját rekordodnál, így nem küldjük be.");
   };
-  const gift=()=>{ const r=Math.random();
-    if(r<0.3){S.shield=Math.min(2,S.shield+1);say("🛡️ Pajzs!")}
-    else if(r<0.55){S.slow=6;say("🐌 Lassítás 6 mp-re")}
-    else if(r<0.8){S.t+=30;say("🎅 Fél nap ajándékba!")}
-    else {S.fast=5;say("🔔 Csengőszó: gyorsulás!")} };
+  bestEl(); newRun();
+  $("#ba")?.classList.toggle("lockd",T<2); $("#bf")?.classList.toggle("lockd",T<3);
   G={};
-  G.kd=e=>{ const k=e.key; if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(k)) e.preventDefault();
-    if(k==="ArrowLeft"||k==="a"||k==="A")K.l=true; if(k==="ArrowRight"||k==="d"||k==="D")K.r=true;
-    if(k==="ArrowDown"||k==="s"||k==="S")K.d=true;
-    if((k==="ArrowUp"||k==="w"||k==="W"||k===" ")&&!e.repeat)jump();
-    if((k==="e"||k==="E")&&!e.repeat)dash(); if((k==="q"||k==="Q")&&!e.repeat)freeze(); };
-  G.ku=e=>{ const k=e.key; if(k==="ArrowLeft"||k==="a"||k==="A")K.l=false; if(k==="ArrowRight"||k==="d"||k==="D")K.r=false; if(k==="ArrowDown"||k==="s"||k==="S")K.d=false; };
+  const L=k=>k==="ArrowLeft"||k==="a"||k==="A", R=k=>k==="ArrowRight"||k==="d"||k==="D", D=k=>k==="ArrowDown"||k==="s"||k==="S", U=k=>k==="ArrowUp"||k==="w"||k==="W"||k===" ";
+  G.kd=e=>{ const k=e.key; if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(k)) e.preventDefault(); if(e.repeat) return;
+    if(L(k))setHeld("l",true); if(R(k))setHeld("r",true); if(D(k))setHeld("d",true); if(U(k))jump();
+    if(k==="e"||k==="E")act(7); if(k==="q"||k==="Q")act(8); };
+  G.ku=e=>{ const k=e.key; if(L(k))setHeld("l",false); if(R(k))setHeld("r",false); if(D(k))setHeld("d",false); };
   addEventListener("keydown",G.kd); addEventListener("keyup",G.ku);
-  const hold=(id,fn)=>{ const el=$(id); if(!el) return; const on=e=>{e.preventDefault();fn(true)}, off=e=>{e.preventDefault();fn(false)};
+  const hold=(id,n)=>{ const el=$(id); if(!el) return; const on=e=>{e.preventDefault();setHeld(n,true)}, off=e=>{e.preventDefault();setHeld(n,false)};
     el.addEventListener("pointerdown",on); el.addEventListener("pointerup",off); el.addEventListener("pointerleave",off); el.addEventListener("pointercancel",off); };
-  hold("#bl",v=>K.l=v); hold("#br",v=>K.r=v); hold("#bd",v=>K.d=v);
+  hold("#bl","l"); hold("#br","r"); hold("#bd","d");
   $("#bu")?.addEventListener("pointerdown",e=>{e.preventDefault();jump()});
-  $("#ba")?.addEventListener("pointerdown",e=>{e.preventDefault();dash()});
-  $("#bf")?.addEventListener("pointerdown",e=>{e.preventDefault();freeze()});
-  cv.addEventListener("pointerdown",()=>{ if(S.over&&S.fin>0.4) reset(); });
-  const hit=w=>{ const ph=P.crouch?24:44, px=P.x+3, pw=16, py=P.y-ph+3, pH=ph-6; return px<w.x+w.w-3&&px+pw>w.x+3&&py<w.y+w.h-3&&py+pH>w.y+3; };
+  $("#ba")?.addEventListener("pointerdown",e=>{e.preventDefault();act(7)});
+  $("#bf")?.addEventListener("pointerdown",e=>{e.preventDefault();act(8)});
+  cv.addEventListener("pointerdown",()=>restart());
   let last=performance.now();
-  function step(now){
-    const dt=Math.min(0.04,(now-last)/1000); last=now;
-    if(!S.over){
-      S.t+=dt; const d=day(); if(d>=24) finish(true);
-      P.crouch=K.d&&P.y>=GY-0.5;
-      if(K.l)P.x-=140*dt; if(K.r)P.x+=140*dt; P.x=clamp(P.x,10,150);
-      P.vy+=1300*dt; P.y+=P.vy*dt; if(P.y>=GY){P.y=GY;P.vy=0;P.jumps=0}
-      S.dashCd=Math.max(0,S.dashCd-dt); S.freezeCd=Math.max(0,S.freezeCd-dt); P.inv=Math.max(0,P.inv-dt);
-      S.slow=Math.max(0,S.slow-dt); S.fast=Math.max(0,S.fast-dt); S.freeze=Math.max(0,S.freeze-dt); S.msgT=Math.max(0,S.msgT-dt);
-      let speed=(150+d*9)*(1+T*0.04); if(S.slow>0)speed*=0.6; if(S.fast>0)speed*=1.35; if(S.freeze>0)speed=0;
-      if(S.freeze<=0) S.spawn-=dt;
-      if(S.spawn<=0){ spawnWave(d); S.spawn=Math.max(0.5,1.7-d*0.045-T*0.03)+Math.random()*0.6; S.mouth=0.35; }
-      S.mouth=Math.max(0,S.mouth-dt);
-      S.giftT-=dt; if(S.giftT<=0){ S.gifts.push({x:W-30,y:Math.random()<0.5?GY-22:GY-72,w:20,h:20}); S.giftT=10+Math.random()*10; }
-      S.waves.forEach(w=>w.x-=speed*dt); S.waves=S.waves.filter(w=>w.x>-50);
-      S.gifts.forEach(g=>g.x-=speed*dt); S.gifts=S.gifts.filter(g=>g.x>-30);
-      const ph=P.crouch?24:44; S.gifts=S.gifts.filter(g=>{ if(P.x+3<g.x+g.w&&P.x+19>g.x&&P.y-ph<g.y+g.h&&P.y>g.y){ gift(); return false } return true; });
-      if(Math.random()<dt*2) S.notes.push({x:W-30,y:60+Math.random()*60,v:20+Math.random()*30});
-      S.notes.forEach(n=>{n.y-=n.v*dt;n.x+=6*dt}); S.notes=S.notes.filter(n=>n.y>10);
-      if(P.inv<=0){ const hw=S.waves.find(hit); if(hw){ if(S.shield>0){ S.shield--; S.waves=S.waves.filter(w=>w!==hw); say("🛡️ A pajzs megvédett!"); } else finish(false); } }
-    } else S.fin+=dt;
+  function frame(now){
+    const dtm=Math.min(0.1,(now-last)/1000); last=now; acc+=dtm;
+    const S=sim.S, P=sim.P, DT=sim.DT;
+    let n=0;
+    while(acc>=DT&&n<6){ acc-=DT; n++;
+      if(!S.over){ P.px=P.x; P.py=P.y; for(const w of S.waves)w.px=w.x; for(const g of S.gifts)g.px=g.x;
+        while(pend.length) sim.input(pend.shift());
+        sim.step(); if(S.over&&!finished) onOver(); } }
+    if(acc>DT*2) acc=0;
+    const al=S.over?1:acc/DT, ip=(c,p)=>p===undefined?c:p+(c-p)*al;
+    if(!S.over&&Math.random()<dtm*2) notes.push({x:W-30,y:60+Math.random()*60,v:20+Math.random()*30});
+    for(const nt of notes){nt.y-=nt.v*dtm;nt.x+=6*dtm} notes=notes.filter(nt=>nt.y>10);
     // rajz
     const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,"#cfe6f7"); sky.addColorStop(1,"#f4faff"); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
     ctx.fillStyle="#fff"; ctx.fillRect(0,GY,W,H-GY); ctx.fillStyle="#bcd9ee"; ctx.fillRect(0,GY,W,2);
     ctx.fillStyle="rgba(140,195,234,.55)"; for(let i=0;i<14;i++){ctx.beginPath();ctx.arc((i*97+S.t*20)%W,(i*53)%GY,1.6,0,6.3);ctx.fill()}
-    S.notes.forEach(n=>{ctx.fillStyle="rgba(215,38,61,.55)";ctx.font="14px sans-serif";ctx.fillText("♪",n.x,n.y)});
+    notes.forEach(nt=>{ctx.fillStyle="rgba(215,38,61,.55)";ctx.font="14px sans-serif";ctx.fillText("♪",nt.x,nt.y)});
     drawMariah(ctx,318,GY,S.mouth>0);
-    S.waves.forEach(w=>drawWave(ctx,w));
-    S.gifts.forEach(g=>{ ctx.font="20px sans-serif"; ctx.textAlign="left"; ctx.fillText("🎁",g.x,g.y+18); });
+    S.waves.forEach(w=>drawWave(ctx,{...w,x:ip(w.x,w.px)}));
+    S.gifts.forEach(g=>{ ctx.font="20px sans-serif"; ctx.textAlign="left"; ctx.fillText("🎁",ip(g.x,g.px),g.y+18); });
+    const hx=ip(P.x,P.px), hy=ip(P.y,P.py);
     if(P.inv>0) ctx.globalAlpha=.5;
-    drawHero(ctx,P); ctx.globalAlpha=1;
-    if(S.shield>0){ ctx.strokeStyle="rgba(44,111,168,.8)"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(P.x+11,P.y-(P.crouch?12:22),26,0,6.3); ctx.stroke(); }
+    drawHero(ctx,{x:hx,y:hy,crouch:P.crouch}); ctx.globalAlpha=1;
+    if(S.shield>0){ ctx.strokeStyle="rgba(44,111,168,.8)"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(hx+11,hy-(P.crouch?12:22),26,0,6.3); ctx.stroke(); }
     if(S.freeze>0){ ctx.fillStyle="rgba(120,180,255,.22)"; ctx.fillRect(0,0,W,H); }
-    const dd=Math.min(24,day());
+    const dd=Math.min(24,S.t/60);
     ctx.fillStyle="#16324f"; ctx.font="700 13px system-ui,sans-serif"; ctx.textAlign="left"; ctx.fillText(`Nap ${dd.toFixed(1).replace(".",",")} / 24`,10,18);
     ctx.fillStyle="rgba(22,50,79,.15)"; ctx.fillRect(10,24,150,5); ctx.fillStyle="#d7263d"; ctx.fillRect(10,24,150*dd/24,5);
     ctx.font="12px system-ui,sans-serif"; ctx.textAlign="right";
@@ -1288,10 +1388,10 @@ function startGame(cv,tier,practice){
     if(S.msgT>0){ ctx.fillStyle="rgba(22,50,79,.85)"; ctx.font="700 14px system-ui,sans-serif"; ctx.textAlign="center"; ctx.fillText(S.msg,W/2,60); ctx.textAlign="left"; }
     if(S.over){ ctx.fillStyle="rgba(22,50,79,.78)"; ctx.fillRect(15,70,330,100); ctx.fillStyle="#fff"; ctx.textAlign="center";
       ctx.font="700 18px system-ui,sans-serif"; ctx.fillText(S.won?"TÚLÉLTED KARÁCSONYIG! 🎄🎉":"Felismerted a dalt! 💀",W/2,102);
-      ctx.font="14px system-ui,sans-serif"; ctx.fillText(`${Math.min(24,day()).toFixed(2).replace(".",",")} napot bírtál${practice?" (gyakorló)":""}`,W/2,126); ctx.fillText("Koppints vagy nyomd meg a ▲ gombot az újrához",W/2,150); ctx.textAlign="left"; }
-    G.raf=requestAnimationFrame(step);
+      ctx.font="14px system-ui,sans-serif"; ctx.fillText(`${simDays(S).toFixed(2).replace(".",",")} napot bírtál${practice?" (gyakorló)":""}`,W/2,126); ctx.fillText("Koppints vagy nyomd meg a ▲ gombot az újrához",W/2,150); ctx.textAlign="left"; }
+    G.raf=requestAnimationFrame(frame);
   }
-  G.raf=requestAnimationFrame(step);
+  G.raf=requestAnimationFrame(frame);
 }
 function drawHero(ctx,P){
   const h=P.crouch?24:44, x=P.x, y=P.y;
@@ -1324,7 +1424,7 @@ function drawWave(ctx,w){
 render();
 setInterval(()=>{ if(route==="home") render(); },3600e3);
 if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
-  addEventListener("load",()=>navigator.serviceWorker.register("sw_v5.js").catch(()=>{}));
+  addEventListener("load",()=>navigator.serviceWorker.register("sw_v6.js").catch(()=>{}));
 }
 </script>
 </body>
