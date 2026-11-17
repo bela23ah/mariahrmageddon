@@ -6,7 +6,7 @@
 <title>Karácsonyi Túlélőközpont</title>
 <meta name="theme-color" content="#dcecf8">
 <meta name="description" content="Mariahrmageddon, Whamageddon, Feliznavidageddon – kiesésbejelentő és statisztika a Kecskeméti Fiatalok Társaságától.">
-<link rel="manifest" href="manifest_v4.webmanifest">
+<link rel="manifest" href="manifest_v5.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -139,6 +139,20 @@ details p{margin:0 0 12px}
 .drip{animation:drip 2.6s ease-in infinite;opacity:0}
 @keyframes drip{0%{opacity:0;transform:translateY(0)}15%{opacity:.9}85%{opacity:.9}100%{opacity:0;transform:translateY(var(--d))}}
 @media (prefers-reduced-motion:reduce){.flake,.drip{animation:none}.flake{display:none}.modal>div{animation:none}}
+
+/* egységes irányító gombok + arcade ranglista */
+.pad{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 8px}
+.pad2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 8px}
+.gbtn{height:60px;border-radius:18px;background:linear-gradient(180deg,#fff,#e9f3fb);border:1px solid var(--line);box-shadow:0 3px 0 #c5dbed;color:var(--blue);display:flex;align-items:center;justify-content:center;gap:8px;font-weight:700;touch-action:none;user-select:none;-webkit-user-select:none;padding:0}
+.gbtn:active{transform:translateY(3px);box-shadow:0 0 0 #c5dbed}
+.gbtn svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.gbtn small{font-size:.72rem;font-weight:600}
+.gbtn.lockd{opacity:.35}
+.arcade{background:#101a2c;color:#ffd166;border-radius:14px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;margin-bottom:10px}
+.arcade .ah{text-align:center;color:#8cc3ea;letter-spacing:2px;margin-bottom:6px}
+.arcade .ar{display:grid;grid-template-columns:2.2em 1fr auto 1.6em;gap:8px;padding:2px 0}
+.arcade .ar.me{color:#fff;background:rgba(255,255,255,.08);border-radius:6px}
+.arcade .an{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -163,22 +177,26 @@ details p{margin:0 0 12px}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {getAuth,onAuthStateChanged,signInWithPopup,signInWithRedirect,GoogleAuthProvider,FacebookAuthProvider,
-  createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,signOut,deleteUser} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,query,where,onSnapshot,
+import {getAuth,onAuthStateChanged,signInWithPopup,signInWithRedirect,GoogleAuthProvider,
+  createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,deleteUser} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,deleteField,query,where,orderBy,limit,onSnapshot,
   runTransaction,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ====== 1) IDE MÁSOLD A FIREBASE BEÁLLÍTÁST (Project settings → Web app) ====== */
+/* ====== Firebase beállítás (a webes Firebase-kulcs nem titok: a védelmet a Firestore-szabályok és a kulcs hivatkozó-korlátozása adja) ====== */
 const firebaseConfig = {
-  apiKey: "IDE",
-  authDomain: "IDE.firebaseapp.com",
-  projectId: "IDE",
-  appId: "IDE"
+  apiKey: "AIzaSyA90QfroorwIJhyjwSTSeq3uEHPocb-vU4",
+  authDomain: "mariahrmageddon-6a9ef.firebaseapp.com",
+  projectId: "mariahrmageddon-6a9ef",
+  storageBucket: "mariahrmageddon-6a9ef.firebasestorage.app",
+  messagingSenderId: "383803167663",
+  appId: "1:383803167663:web:9045ae89a6fbd8df0f155a"
 };
-/* ====== 2) Linkek ====== */
-const FB_PAGE_URL  = "https://www.facebook.com/Kaefte";   // a szervezők Facebook-oldala
+/* ====== Linkek ====== */
+const FB_PAGE_URL  = "https://www.facebook.com/Kaefte";
 const FB_PAGE_SHOW = "facebook.com/Kaefte";
-const APP_URL      = "";   // IDE a kész felület linkje (pl. https://felhasznalo.github.io/tulelo/). Üresen: az aktuális cím.
+const APP_URL      = "https://bela23ah.github.io/mariahrmageddon/";
+const VIDEO_URL    = "https://www.facebook.com/reel/1939111766651516";
+const MOTTO        = "A kihíváshoz sok sikert, kitartást, leleményt és persze jó szerencsét!";
 /* ================================================================================ */
 
 const YEARS = [2026,2027,2028];
@@ -268,40 +286,39 @@ function treeSvg(daysPassed,daysLeft,skulls){
 }
 
 /* ---------- Firebase ---------- */
-if (firebaseConfig.apiKey === "IDE") {
-  $("#setup").classList.remove("hide");
-  $("#setup").innerHTML = "⚙️ <b>Beállítás szükséges:</b> a fájl elején cseréld ki a <code>firebaseConfig</code> értékeit a saját Firebase-projektedére.";
-}
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);
+let db; try{ db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }catch(e){ db=getFirestore(app); }
 
 let user=null, userDoc=null, userLoaded=false, myPart=null, mineReady=false, isAdmin=false, statsPublic=false, onboardFor=null;
-let parts=[], elims=[], dangers=[], allUsers=[], ready=false, subs=[];
+let elims=[], subs=[], rem=null, remLoaded=false, TEAMS=null, teamsLoading=false;
 let route=ls.get("route0",null)||"home", pageName=null, mapFilter="all", firstAuth=true;
-const hasAll = () => isAdmin || statsPublic;
+const AD={loaded:false,loading:false,t:0,parts:[],elims:[],dangers:[],users:[]};
 
-onSnapshot(doc(db,"config","public"), s=>{ statsPublic=!!(s.exists()&&s.data().statsPublic); subscribe(); render(); }, ()=>{});
+/* Olvasáscsökkentés: a konfig és a pillanatképek (térkép, statisztika) 1-1 dokumentum, helyben gyorsítótárazva */
+async function cachedDoc(name,ttl){
+  const k="snap_"+name+YEAR, c=ls.get(k,null);
+  if(c&&Date.now()-c.t<ttl) return c.d;
+  try{ const s=await getDoc(doc(db,"config",name)); const d=s.exists()?s.data():null; ls.set(k,{t:Date.now(),d}); return d; }
+  catch(e){ return c?c.d:null; }
+}
+async function loadConfig(){ const c=await cachedDoc("public",5*60e3); statsPublic=!!(c&&c.statsPublic); render(); }
+loadConfig();
+const pendingTeamParam=new URLSearchParams(location.search).get("team");
+if(pendingTeamParam&&/^[A-Za-z0-9]{6}$/.test(pendingTeamParam)) ls.set("pendingTeam",pendingTeamParam.toUpperCase());
 
 function subscribe(){
-  subs.forEach(f=>f()); subs=[]; parts=[]; elims=[]; dangers=[]; allUsers=[]; ready=false; mineReady=false; myPart=null;
-  const Y=where("year","==",YEAR);
-  const on=(q,fn)=>subs.push(onSnapshot(q,s=>{fn(s);render()},e=>console.error(e)));
-  if(user) subs.push(onSnapshot(doc(db,"participations",`${YEAR}_${user.uid}`),s=>{myPart=s.exists()?{id:s.id,...s.data()}:null;mineReady=true;render();maybeOnboard()},e=>{console.error(e);mineReady=true}));
-  if(hasAll()){
-    on(query(collection(db,"participations"),Y),s=>{parts=s.docs.map(d=>({id:d.id,...d.data()}));ready=true});
-    on(query(collection(db,"eliminations"),Y),s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}))});
-  } else if(user){
-    on(query(collection(db,"eliminations"),where("uid","==",user.uid),Y),s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}));ready=true});
-  }
-  on(query(collection(db,"dangerZones"),Y,...(isAdmin?[]:[where("approved","==",true)])),s=>{dangers=s.docs.map(d=>({id:d.id,...d.data()}))});
-  if(isAdmin) on(collection(db,"users"),s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}))});
+  subs.forEach(f=>f()); subs=[]; elims=[]; mineReady=false; myPart=null;
+  if(!user) return;
+  /* csak a saját dokumentumaink élő figyelése – néhány olvasás, nem az egész gyűjtemény */
+  subs.push(onSnapshot(doc(db,"participations",`${YEAR}_${user.uid}`),s=>{myPart=s.exists()?{id:s.id,...s.data()}:null;mineReady=true;render();maybeOnboard();if(myPart){touchRem();checkPendingTeam()}},e=>{console.error(e);mineReady=true;render()}));
+  subs.push(onSnapshot(query(collection(db,"eliminations"),where("uid","==",user.uid),where("year","==",YEAR)),s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e)));
 }
 function maybeOnboard(){
   if(user&&userLoaded&&mineReady&&(!userDoc||!myPart)&&onboardFor!==user.uid){ onboardFor=user.uid; onboarding(); }
 }
 onAuthStateChanged(auth, async u=>{
-  user=u; userDoc=null; isAdmin=false; userLoaded=false; onboardFor=null;
+  user=u; userDoc=null; isAdmin=false; userLoaded=false; onboardFor=null; rem=null; remLoaded=false; TEAMS=null; AD.loaded=false;
   if(u){
     try{
       const s=await getDoc(doc(db,"users",u.uid)); userDoc=s.exists()?s.data():null;
@@ -310,13 +327,51 @@ onAuthStateChanged(auth, async u=>{
   }
   userLoaded=true;
   if(firstAuth){ firstAuth=false; if(u&&phase()==="during") route="game"; }
-  subscribe(); render(); maybeOnboard();
+  subscribe(); render(); maybeOnboard(); if(u) loadRem();
 });
 
 const myElim = k => elims.find(e=>e.uid===user?.uid && e.challenge===k);
 const joinedOf = k => !!myPart && (myPart.challenges||[]).includes(k);
 const unlocked = k => !!myPart && (k==="mariah"||myPart.mode==="diehard"||!!myElim(PREV[k]));
 const myElims = () => elims.filter(e=>e.uid===user?.uid);
+const isAlive = () => !myPart ? true : (myPart.mode==="diehard" ? !KEYS.every(k=>myElim(k)) : !myElim("feliz"));
+
+/* ---------- „Élsz még?” e-mail emlékeztető (a küldést a worker végzi) ---------- */
+async function loadRem(){
+  try{ const s=await getDoc(doc(db,"reminders",user.uid)); rem=s.exists()?s.data():null; }catch(e){}
+  remLoaded=true; touchRem();
+}
+async function setReminder(on){
+  if(!user||!user.email) throw new Error("Nincs e-mail-cím a fiókhoz.");
+  await setDoc(doc(db,"reminders",user.uid),{email:user.email,optIn:on,alive:isAlive(),lastSeen:serverTimestamp(),year:YEAR});
+  rem={email:user.email,optIn:on}; ls.set("remSeen",Date.now());
+}
+async function touchRem(force){
+  if(!user||!rem||!rem.optIn||!myPart) return;
+  if(!force&&Date.now()-ls.get("remSeen",0)<12*3600e3) return;
+  try{ await updateDoc(doc(db,"reminders",user.uid),{lastSeen:serverTimestamp(),alive:isAlive()}); ls.set("remSeen",Date.now()); }catch(e){}
+}
+
+/* ---------- Admin: adatok kézi/éves betöltése (nem élő figyelés – ezzel spórolunk az olvasásokon) ---------- */
+async function loadAdminData(force){
+  if(!isAdmin||AD.loading) return;
+  if(AD.loaded&&!force&&Date.now()-AD.t<5*60e3) return;
+  AD.loading=true;
+  try{
+    const Y=where("year","==",YEAR);
+    const [a,b,c,d]=await Promise.all([getDocs(query(collection(db,"participations"),Y)),getDocs(query(collection(db,"eliminations"),Y)),getDocs(query(collection(db,"dangerZones"),Y)),getDocs(collection(db,"users"))]);
+    AD.parts=a.docs.map(x=>({id:x.id,...x.data()})); AD.elims=b.docs.map(x=>({id:x.id,...x.data()}));
+    AD.dangers=c.docs.map(x=>({id:x.id,...x.data()})); AD.users=d.docs.map(x=>({id:x.id,...x.data()}));
+    AD.loaded=true; AD.t=Date.now();
+  }catch(e){console.error(e)}
+  AD.loading=false;
+  render();
+  await maybeAutoPublish();
+}
+async function maybeAutoPublish(){
+  if(!isAdmin||!AD.loaded) return;
+  try{ const s=await getDoc(doc(db,"config","mapSnapshot")); const t=s.exists()?(s.data().t||0):0; if(Date.now()-t>30*60e3) await publishSnapshots(); }catch(e){console.error(e)}
+}
 
 /* ---------- navigáció ---------- */
 function go(r){
@@ -325,7 +380,7 @@ function go(r){
   route=r; ls.set("route0",r); closeModal(); if(pageName) closePage(true); render(); scrollTo(0,0);
 }
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>go(b.dataset.r));
-function openPage(n){ closeModal(); stopGame(); pageName=n; history.pushState({p:n},""); renderPage(true); }
+function openPage(n){ closeModal(); stopGame(); pageName=n; history.pushState({p:n},""); renderPage(true); if(isAdmin&&(n==="stats"||n==="admin")) loadAdminData(); if(n==="teams") loadTeams(); }
 function closePage(silent){ if(!pageName) return; stopGame(); pageName=null; $("#page").classList.add("hide"); if(!silent) history.back(); }
 addEventListener("popstate",()=>{ if(pageName){stopGame();pageName=null;$("#page").classList.add("hide")} });
 
@@ -352,10 +407,10 @@ function viewHome(v){
     line=`Mariah szabadon jár. Bírd ki karácsonyig!`;
   } else { hero=treeSvg(24,0,myElims().length); line="A játék véget ért. Kellemes karácsonyt!"; }
   const ages=KEYS.map(k=>YEAR-CH[k].rel), total=ages.reduce((a,x)=>a+x,0);
-  const stat = hasAll() && ready ? `<p class="mut" style="text-align:center">${parts.length} regisztrált játékos · ${elims.length} kiesés eddig</p>` : "";
+  const stat = "";
   const cta = !user ? `<button class="pri wide" id="h-in">Belépek és játszom</button>` : `<button class="pri wide" id="h-go">Ugrás a játékhoz</button>`;
   v.innerHTML=`<div class="hero">${hero}<h1>Christmas Survival Center</h1><p class="count">${line}</p><p class="sub">Három dal. Három front. Egyetlen cél: túlélni.</p></div>${stat}
-  <div style="margin:10px 0">${cta}</div><div id="vbanner"></div><div id="inst"></div>
+  <div style="margin:10px 0">${cta}</div>${badgeHtml()}<div id="vbanner"></div><div id="inst"></div>
   <div class="card"><h3>Mi ez?</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátéka. December 1-jétől karácsony éjfélig próbáld elkerülni, hogy meghallgasd – <b>felismerd</b> – a három legismertebb karácsonyi dalt. Aki felismeri, kiesik, és ezt a telefonjáról egy koppintással jelentheti.</p>
   <p class="mut">${YEAR}-ben összesen ${total} évnyi karácsonyi zenei terror vár rád (${ages.join(" + ")} év).</p></div>
   <div class="card"><h3>A három front</h3>${KEYS.map(k=>`<div class="row" style="margin:8px 0"><span>${CH[k].ico} <b>${CH[k].name}</b></span><span class="mut">${CH[k].artist}: ${CH[k].song} (${YEAR-CH[k].rel} éves)</span></div>`).join("")}</div>
@@ -371,6 +426,12 @@ function viewHome(v){
   $("#h-go")?.addEventListener("click",()=>go("game"));
   $("#h-rules").onclick=e=>{e.preventDefault();go("rules")};
   installBanner(); verifyBanner();
+  $("#hfr")?.addEventListener("click",()=>openPage("teams"));
+}
+function badgeHtml(){
+  if(!user||!myPart) return `<div class="card row"><div><b>👥 Versenyezz a barátaiddal!</b><div class="mut">Hívd meg őket, és nézzétek meg, ki éli túl tovább.</div></div><button class="sm" id="hfr">Barátok</button></div>`;
+  const t=tierInfo();
+  return `<div class="card row"><div><span style="font-size:1.6rem">${TIERS[t.i][1]}</span> <b>${TIERS[t.i][0]}</b><div class="mut">${t.i<4?`Még ${t.left} nap a(z) ${TIERS[t.i+1][0]} szintig`:"Elérted a legmagasabb szintet!"}</div></div><button class="sm" id="hfr">👥 Barátok</button></div>`;
 }
 function verifyBanner(){
   const el=$("#vbanner"); if(!el||!user||user.emailVerified||user.providerData?.[0]?.providerId!=="password") return;
@@ -438,7 +499,8 @@ function rulesHtml(){return `
    <li>Ez egy túlélős játék, de <b>ne legyél szemét</b>! Nem ér direkt lejátszani a barátaidnak, kollégáidnak, ismerőseidnek!</li></ol></div>
   <div class="card"><h3>Játékmódok</h3>
    <p><b>🎄 Hagyományos (vígaszági):</b> a Mariahrmageddonnal indulsz. Ha kiestél, vígaszágon a <b>Whamageddonban</b> maradhatsz bent („Last Christmas”). Ha abból is kiestél, jön a <b>Feliznavidageddon</b>. A többi szabály változatlan.</p>
-   <p><b>🔥 Die Hard:</b> mindhárom fronton egyszerre indulsz, és mindegyiken külön esel ki.</p></div>`}
+   <p><b>🔥 Die Hard:</b> mindhárom fronton egyszerre indulsz, és mindegyiken külön esel ki.</p></div>
+  <div class="card"><h3>▶ Szabálymagyarázó videó</h3><p class="mut" style="margin:0 0 8px">Ha inkább megnéznéd, mint elolvasnád:</p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">Megnyitás Facebookon</a><p class="mut" style="margin:10px 0 0">${esc(MOTTO)}</p></div>`}
 const FAQ=[
  ["Mi számít kiesésnek?","Ha felismered az eredeti dalt – akár egyetlen taktusból is. Az számít, hogy felismerted, nem az, hogy végighallgattad."],
  ["A remix, a feldolgozás vagy a gyerekkórus is számít?","Nem. Csak az eredeti előadó eredeti felvétele. A feldolgozásokat nyugodtan hallgathatod."],
@@ -449,47 +511,61 @@ const FAQ=[
  ["Hogyan jelentsem a kiesésem?","Nyisd meg az appot, koppints a dal csempéjére, add meg a helyet és a körülményt, és nyomd meg a Véglegesítem gombot. Az időpont alapból a pillanatnyi idő, de átírhatod, ha később jelentesz."],
  ["Hogyan oszthatom meg Facebookon?","A bejelentés után felugró ablakban a „Megosztás Facebookon” gomb a poszt szövegét a vágólapra másolja, és megnyitja a Facebook megosztóját. A szöveget illeszd be a posztba (a Facebook nem enged előre kitöltött szöveget). Képeslapot is letölthetsz."],
  ["Visszavonhatom a kiesést?","Nem, a kiesés végleges. Az adatait (hely, időpont, körülmény) utólag javíthatod. Ha tévedésből jelentettél, írj nekünk, és az admin törli."],
- ["Mit lát belőlem a többi játékos?","A statisztika és a térkép egyelőre csak az adminnak látható. Ha nyilvános lesz, a becenevedet látják – kivéve, ha a regisztrációkor a „Rejtőzködő” opciót választottad. A kiesés-bejelentés nem tartalmazza a nevedet. Az e-mail-címed soha nem látszik."],
+ ["Mit lát belőlem a többi játékos?","A nyilvános térkép és statisztika csak összesített számokat mutat, neveket nem. A csapatodban a barátaid látják a becenevedet és azt, hogy kiestél-e (ha a „Rejtőzködő” opciót választottad, akkor is csak a csapattársak). Az e-mail-címed soha nem látszik. A kiesés-bejelentés nem tartalmazza a nevedet."],
  ["Pontos helyadatot tároltok?","Nem. Ha a helymegosztást használod, a koordinátát kb. 1 km-es pontosságúra kerekítjük. Települést egyénileg is beírhatsz."],
  ["Mi az a Kerülendő hely?","Bárki jelezhet olyan helyet (pláza, vásár, bolt), ahol sokszor szól valamelyik dal. A jelzések a szervezők jóváhagyása után jelennek meg a térképen."],
  ["Hogyan törölhetem az adataimat?","A Profil oldalon (Több → Profilom) a „Fiókom és adataim törlése” gombbal."],
  ["Hogyan teszem fel az appot a telefonomra?","Több → Telepítés. Androidon a böngésző felajánlja a telepítést, iPhone-on a Megosztás menüből a „Főképernyőhöz adás” kell."],
- ["Mit csináljak, ha valaki direkt lejátssza a dalt?","Ne legyél szemét, és ne is tűrd: ez a 6. szabály miatt nem ér. Egy mosollyal jelezheted neki."]
+ ["Mit csináljak, ha valaki direkt lejátssza a dalt?","Ne legyél szemét, és ne is tűrd: ez a 6. szabály miatt nem ér. Egy mosollyal jelezheted neki."],
+ ["Elfelejtettem a jelszavam.","A belépő ablakban írd be az e-mail-címed, és koppints az „Elfelejtett jelszó” linkre – e-mailben kapsz egy visszaállító linket. Google-lel belépve nincs külön jelszó."],
+ ["Hogyan hívhatom meg a barátaimat?","Több → Barátok. Hozz létre egy csapatot, és küldd el a meghívó linket – a csapat ranglistáján látjátok, ki éli túl tovább."],
+ ["Mik a jelvények?","Regisztrációtól (de legkorábban december 1-jétől) számítva kb. 5 naponta új szintet érsz el: Kiscserkész, Profi túlélő, Zenei Rambo, Neo, Karácsonyi legenda. A mini játékban ezek új képességeket adnak, de a játék is nehezebb lesz."],
+ ["Mi az az „Élsz még?” e-mail?","Ha kéred (Profilom vagy regisztráció), 3 nap belépés nélkül emlékeztetőt küldünk, ha még bent vagy a játékban. Bármikor kikapcsolhatod."],
+ ["Miért nem azonnal frissül a térkép és a statisztika?","Hogy a rendszer ingyenes keretben maradjon, az összesített adatok kb. óránként frissülnek."]
 ];
 function faqHtml(){return FAQ.map(([q,a])=>`<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}
 
-/* ---------- Térkép ---------- */
-let mapObj=null, elimLayer=null, dangerLayer=null, leafletP=null;
+/* ---------- Térkép (mindenkinek; adatai az admin által óránként közzétett pillanatképből jönnek) ---------- */
+let mapObj=null, elimLayer=null, dangerLayer=null, leafletP=null, MS=null;
 let showElim=true, showDanger=true;
+const CK={mariah:"m",wham:"w",feliz:"f"};
+const stamp=t=>new Date(t).toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
 function loadLeaflet(){
   if(window.L) return Promise.resolve();
   if(leafletP) return leafletP;
   leafletP=new Promise((res,rej)=>{
     const l=document.createElement("link"); l.rel="stylesheet"; l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(l);
-    const s=document.createElement("script"); s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"; s.onload=res; s.onerror=()=>{leafletP=null;rej()}; document.head.appendChild(s);
+    const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"; sc.onload=res; sc.onerror=()=>{leafletP=null;rej()}; document.head.appendChild(sc);
   });
   return leafletP;
 }
 function destroyMap(){ if(mapObj){mapObj.remove();mapObj=null;elimLayer=dangerLayer=null} }
+async function loadMapSnap(){
+  const d=await cachedDoc("mapSnapshot",15*60e3);
+  MS=d&&d.year===YEAR?d:null;
+  const n=$("#mupd"); if(n) n.textContent=MS?`Adatok állapota: ${stamp(MS.t)} (kb. óránként frissül)`:"Még nincs közzétett kiesés-adat.";
+  refreshMarkers(true);
+}
 function viewMap(v){
   destroyMap();
   v.innerHTML=`<h1 style="margin-top:.5em">Térkép</h1>
-  <p class="sub">${hasAll()?"Az összes bejelentett kiesés (kb. 1 km-es pontossággal) és a jóváhagyott kerülendő helyek.":"Itt a saját kiesésed és a jóváhagyott kerülendő helyek látszanak. A teljes kiesés-térkép akkor nyílik meg, amikor a statisztikát nyilvánossá tesszük."}</p>
+  <p class="sub">Hol estek ki a játékosok (településenként összesítve, kb. 1 km-es pontossággal), és mely helyeket érdemes elkerülni.</p>
   <div class="row" style="margin-bottom:6px"><div>
     <label class="pill"><input type="checkbox" id="lEl" ${showElim?"checked":""}> 🔴 Kiesések</label><label class="pill"><input type="checkbox" id="lDz" ${showDanger?"checked":""}> ⚠️ Kerülendő helyek</label></div>
     <button class="warn sm" id="addDz">⚠️ Kerülendő hely jelzése</button></div>
   <div class="chips" id="mchips"><button class="chip ${mapFilter==="all"?"sel":""}" data-f="all">Mind</button>${KEYS.map(k=>`<button class="chip ${mapFilter===k?"sel":""}" data-f="${k}">${CH[k].ico} ${CH[k].short}</button>`).join("")}</div>
-  <div id="map"></div><div id="merr" class="err"></div>`;
+  <div id="map"></div><div class="mut" id="mupd" style="margin-top:6px"></div><div id="merr" class="err"></div>`;
   v.querySelectorAll("#mchips .chip").forEach(b=>b.onclick=()=>{mapFilter=b.dataset.f;v.querySelectorAll("#mchips .chip").forEach(x=>x.classList.toggle("sel",x===b));refreshMarkers()});
   $("#lEl").onchange=e=>{showElim=e.target.checked;refreshMarkers()};
   $("#lDz").onchange=e=>{showDanger=e.target.checked;refreshMarkers()};
-  $("#addDz").onclick=()=>user&&myPart?dangerModal():loginModal();
+  $("#addDz").onclick=()=>user&&myPart?dangerModal():(user?onboarding():loginModal());
   loadLeaflet().then(()=>{
     if(route!=="map"||!$("#map")||mapObj) return;
     mapObj=L.map("map").setView([47.1,19.5],7);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"&copy; OpenStreetMap"}).addTo(mapObj);
     elimLayer=L.layerGroup().addTo(mapObj); dangerLayer=L.layerGroup().addTo(mapObj);
-    refreshMarkers(true);
+    loadMapSnap();
+    if(isAdmin) loadAdminData().then(()=>{ ls.set("snap_mapSnapshot"+YEAR,null); loadMapSnap(); });
   }).catch(()=>{const m=$("#merr");if(m)m.textContent="A térkép betöltéséhez internetkapcsolat kell."});
 }
 let fitted=false;
@@ -497,29 +573,22 @@ function refreshMarkers(fit){
   if(!mapObj||!elimLayer) return;
   elimLayer.clearLayers(); dangerLayer.clearLayers();
   const pts=[];
-  if(showElim){
-    const g={};
-    elims.filter(e=>mapFilter==="all"||e.challenge===mapFilter).forEach(e=>{
-      const c=(e.lat!=null&&e.lng!=null)?{lat:e.lat,lng:e.lng}:cityCoords(e.settlement); if(!c) return;
-      const key=c.lat+","+c.lng; (g[key]??={lat:c.lat,lng:c.lng,name:e.settlement,list:[]}).list.push(e);
-    });
-    Object.values(g).forEach(o=>{
-      const n=o.list.length, by={}; o.list.forEach(e=>by[e.challenge]=(by[e.challenge]||0)+1);
-      const col=Object.keys(by).length>1?"#d7263d":CH[o.list[0].challenge].accent;
+  if(showElim&&MS){
+    (MS.cells||[]).forEach(o=>{
+      const by={}; KEYS.forEach(k=>{ if((mapFilter==="all"||mapFilter===k)&&o[CK[k]]) by[k]=o[CK[k]]; });
+      const n=Object.values(by).reduce((a,x)=>a+x,0); if(!n) return;
+      const col=Object.keys(by).length>1?"#d7263d":CH[Object.keys(by)[0]].accent;
       const m=L.circleMarker([o.lat,o.lng],{radius:7+Math.min(20,Math.sqrt(n)*5),color:"#fff",weight:2,fillColor:col,fillOpacity:.8});
-      m.bindPopup(`<b>${esc(o.name)}</b><br>${n} kiesés<br>`+Object.entries(by).map(([k,c])=>`${CH[k].ico} ${CH[k].short}: ${c}`).join("<br>"));
+      m.bindPopup(`<b>${esc(o.n)}</b><br>${n} kiesés<br>`+Object.entries(by).map(([k,c])=>`${CH[k].ico} ${CH[k].short}: ${c}`).join("<br>"));
       m.addTo(elimLayer); pts.push([o.lat,o.lng]);
     });
   }
-  if(showDanger){
-    dangers.filter(d=>d.approved||isAdmin).forEach(d=>{
-      const c=cityCoords(d.settlement); if(!c) return;
-      let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h);
-      const lat=c.lat+((h%7)-3)*0.004, lng=c.lng+(((h>>3)%7)-3)*0.006;
-      const col=!d.approved?"#64748b":d.riskLevel==="extreme"?"#b91c1c":"#d97706";
+  if(showDanger&&MS){
+    (MS.dz||[]).filter(d=>mapFilter==="all"||(d.sg||[]).includes(mapFilter)).forEach(d=>{
+      const col=d.r==="extreme"?"#b91c1c":"#d97706";
       const icon=L.divIcon({className:"",html:`<div style="background:${col};color:#fff;border:2px solid #fff;border-radius:99px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.35)">!</div>`,iconSize:[24,24],iconAnchor:[12,12]});
-      const songs=(d.songs||[]).map(s=>CH[s]?.short).filter(Boolean).join(", ");
-      L.marker([lat,lng],{icon}).bindPopup(`<b>⚠️ ${esc(d.place)}</b> (${esc(d.settlement)})${d.approved?"":" <i>(jóváhagyásra vár)</i>"}<br><small>${esc(d.category)} · ${esc(songs)}</small>${d.note?`<p style="margin:4px 0 0;font-size:12px">„${esc(d.note)}”</p>`:""}`).addTo(dangerLayer);
+      const songs=(d.sg||[]).map(x=>CH[x]?.short).filter(Boolean).join(", ");
+      L.marker([d.lat,d.lng],{icon}).bindPopup(`<b>⚠️ ${esc(d.p)}</b> (${esc(d.s)})<br><small>${esc(d.c)} · ${esc(songs)}${d.r==="extreme"?" · extrém zóna":""}</small>${d.note?`<p style="margin:4px 0 0;font-size:12px">„${esc(d.note)}”</p>`:""}`).addTo(dangerLayer);
     });
   }
   if((fit||!fitted)&&pts.length){ fitted=true; if(pts.length===1) mapObj.setView(pts[0],9); else mapObj.fitBounds(pts,{padding:[30,30],maxZoom:10}); }
@@ -549,11 +618,12 @@ function dangerModal(){
 
 /* ---------- Több (+) menü ---------- */
 function plusSheet(){
-  const mt=(id,ico,t,s,lock)=>`<button class="tile mini ${lock?"lock":""}" data-p="${id}"><span class="ico">${ico}</span><span class="t"><b>${t}</b><span>${s}</span></span></button>`;
+  const mt=(id,ico,t,sub,lock)=>`<button class="tile mini ${lock?"lock":""}" data-p="${id}"><span class="ico">${ico}</span><span class="t"><b>${t}</b><span>${sub}</span></span></button>`;
   const canStats=isAdmin||statsPublic;
   modal(`<div class="grip"></div><h3 style="margin:0 0 10px">Több funkció</h3><div class="grid2">
-    ${mt("songs","🎧","Dalok","Az ellenfelek")}
+    ${mt("teams","👥","Barátok","Meghívás, versengés")}
     ${mt("minigame","🎮","Mini játék","Fülvédő futam")}
+    ${mt("songs","🎧","Dalok","Az ellenfelek")}
     ${mt("tips","🛡️","Túlélési tippek","6 jó tanács")}
     ${mt("profile","👤","Profilom",user?esc(userDoc?.nick||""):"Belépés")}
     ${mt("install","📲","Telepítés","Főképernyőre")}
@@ -562,12 +632,12 @@ function plusSheet(){
     ${mt("about","ℹ️","Névjegy","Szervező, adatkezelés")}
   </div>`);
   $("#modal").querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ const p=b.dataset.p;
-    if(p==="stats"&&!canStats){ modal(`<div class="grip"></div><h3>Statisztika</h3><p>Az országos statisztika egyelőre zárolt. Amint a szervezők megnyitják, itt láthatod, hányan játszanak, kik vannak még bent, és hol esnek ki a legtöbben.</p><button class="wide" id="x">Rendben</button>`);$("#x").onclick=closeModal;return;}
+    if(p==="stats"&&!canStats){ modal(`<div class="grip"></div><h3>Statisztika</h3><p>Az országos statisztika egyelőre zárolt. Amint a szervezők megnyitják, itt láthatod, hányan játszanak, és hol esnek ki a legtöbben.</p><button class="wide" id="x">Rendben</button>`);$("#x").onclick=closeModal;return;}
     openPage(p); });
 }
 
 /* ---------- Oldalak (overlay) ---------- */
-const PAGES={songs:["Dalok",pageSongs],minigame:["Fülvédő futam",pageMini],tips:["Túlélési tippek",pageTips],profile:["Profilom",pageProfile],install:["Telepítés",pageInstall],stats:["Statisztika",pageStats],admin:["Admin",pageAdmin],about:["Névjegy",pageAbout]};
+const PAGES={teams:["Barátok és versengés",pageTeams],songs:["Dalok",pageSongs],minigame:["Fülvédő futam",pageMini],tips:["Túlélési tippek",pageTips],profile:["Profilom",pageProfile],install:["Telepítés",pageInstall],stats:["Statisztika",pageStats],admin:["Admin",pageAdmin],about:["Névjegy",pageAbout]};
 function renderPage(force){
   const el=$("#page");
   if(!pageName){el.classList.add("hide");return}
@@ -604,16 +674,21 @@ function pageTips(b){
 function pageProfile(b){
   if(!user){b.innerHTML=`<div class="card"><p>Nem vagy belépve.</p><button class="pri" id="pl">Belépés / regisztráció</button></div>`;$("#pl").onclick=()=>{closePage();loginModal()};return}
   if(!myPart){b.innerHTML=`<div class="card"><p>Még nincs beállított részvételed ${YEAR}-re.</p><button class="pri" id="po">Beállítás</button></div><div class="card"><button class="wide" id="lo">Kilépés</button></div>`;$("#po").onclick=()=>{closePage();onboarding()};$("#lo").onclick=async()=>{await signOut(auth);closePage()};return}
-  const noElim=myElims().length===0;
+  const noElim=myElims().length===0, t=tierInfo();
   b.innerHTML=`<div class="card"><h3>${esc(userDoc?.nick||"")} ${isAdmin?`<span class="tag alive">admin</span>`:""}</h3><p class="mut">Az e-mail-címed nem nyilvános.</p></div>
+  <div class="card"><h3>${TIERS[t.i][1]} ${TIERS[t.i][0]}</h3><p class="mut" style="margin:0 0 8px">${t.d.toFixed(1).replace(".",",")} napot éltél túl a játékban.${t.i<4?` Még ${t.left} nap a(z) <b>${TIERS[t.i+1][0]}</b> szintig.`:" Elérted a legmagasabb szintet!"}</p>
+  <div>${TIERS.map((x,i)=>`<span class="pill" style="${i<=t.i?"background:#e8f6ee;border-color:#9ad3b5":"opacity:.5"}">${x[1]} ${x[0]}</span>`).join("")}</div>
+  <p class="mut" style="margin:8px 0 0">Minden kb. 5 túlélt nap új jelvényt ér, és a mini játékban új képességet ad.</p></div>
   <div class="card"><h3>${YEAR}. évi játékmódom</h3><p><span class="tag alive">${myPart.mode==="diehard"?"🔥 Die Hard":"🎄 Hagyományos"}</span></p>
   ${myPart.mode==="classic"?(noElim?`<button class="sm" id="todh">Váltás Die Hard módra</button><p class="mut">Csak addig lehetséges, amíg nem estél ki sehol.</p>`:`<p class="mut">Kiesés után a mód már nem váltható.</p>`):""}
-  <label class="chk" style="margin-top:10px"><input type="checkbox" id="pub" ${myPart.publicProfile?"checked":""}> <span>A nevem látszhat a nyilvános statisztikában</span></label><div class="err" id="perr"></div></div>
+  <label class="chk" style="margin-top:10px"><input type="checkbox" id="pub" ${myPart.publicProfile?"checked":""}> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
+  <label class="chk"><input type="checkbox" id="remt" ${rem?.optIn?"checked":""}> <span>📧 „Élsz még?” e-mail emlékeztető, ha 3 napig nem lépek be</span></label><div class="err" id="perr"></div></div>
   <div class="card"><button class="wide" id="lo">Kilépés</button></div>
-  <div class="card"><h3>Adataim</h3><p class="mut">Ha törlöd a fiókodat, a profilod, a részvételeid és minden bejelentett kiesésed végleg törlődik.</p><button class="wide" id="del" style="color:var(--red)">Fiókom és adataim törlése</button></div>`;
+  <div class="card"><h3>Adataim</h3><p class="mut">Ha törlöd a fiókodat, a profilod, a részvételeid, a kiesés-bejelentéseid, a ranglista-eredményed és az emlékeztető-beállításod végleg törlődik, és kilépsz a csapatokból.</p><button class="wide" id="del" style="color:var(--red)">Fiókom és adataim törlése</button></div>`;
   $("#todh")?.addEventListener("click",async()=>{ if(!confirm("Biztosan Die Hard módra váltasz? Mindhárom fronton egyszerre indulsz."))return;
     try{await updateDoc(doc(db,"participations",myPart.id),{mode:"diehard",challenges:KEYS})}catch(e){$("#perr").textContent=msg(e)} });
   $("#pub").onchange=async e=>{ try{ await updateDoc(doc(db,"participations",myPart.id),{publicProfile:e.target.checked,nick:e.target.checked?userDoc.nick:"Rejtőzködő túlélő"}) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
+  $("#remt").onchange=async e=>{ try{ await setReminder(e.target.checked) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
   $("#lo").onclick=async()=>{await signOut(auth);closePage()};
   $("#del").onclick=deleteAccount;
 }
@@ -621,10 +696,13 @@ async function deleteAccount(){
   if(!confirm("Biztosan törlöd a fiókodat és az összes adatodat? Ez nem vonható vissza."))return;
   if(Date.now()-Date.parse(user.metadata.lastSignInTime)>4*60e3){alert("Biztonsági okból lépj ki, jelentkezz be újra, és a belépés után rögtön próbáld újra a törlést.");return}
   try{
+    try{ await loadTeams(true); for(const t of TEAMS||[]) await leaveTeam(t,true); }catch(e){console.error(e)}
     for(const c of ["eliminations","participations","dangerZones"]){
-      const s=await getDocs(query(collection(db,c),where("uid","==",user.uid)));
-      for(const d of s.docs) await deleteDoc(doc(db,c,d.id));
+      const sn=await getDocs(query(collection(db,c),where("uid","==",user.uid)));
+      for(const d of sn.docs) await deleteDoc(doc(db,c,d.id));
     }
+    for(const y of YEARS){ try{ await deleteDoc(doc(db,"games",String(y),"scores",user.uid)); }catch(e){} }
+    try{ await deleteDoc(doc(db,"reminders",user.uid)); }catch(e){}
     if(userDoc?.nickKey) await deleteDoc(doc(db,"nicknames",userDoc.nickKey));
     await deleteDoc(doc(db,"users",user.uid));
     await deleteUser(user);
@@ -650,113 +728,148 @@ function pageInstall(b){
 }
 function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
-  <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p></div>
-  <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet; a nyilvános statisztikában a név csak akkor látszik, ha engedélyezted.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v4 · ${YEAR}</p>`;
+  <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
+  <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
+  <p class="mut" style="text-align:center">v5 · ${YEAR}</p>`;
 }
 
-/* ---------- Statisztika ---------- */
-const nameOf = uid => allUsers.find(u=>u.id===uid)?.nick || parts.find(p=>p.uid===uid)?.nick || "Játékos";
-function bars(map,limit=8){
-  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,limit);
-  if(!arr.length) return `<div class="mut">Még nincs adat.</div>`;
-  const m=arr[0][1];
-  return arr.map(([l,n])=>`<div class="bar"><span class="l">${esc(l)}</span><i style="width:${Math.max(2,n/m*45)}%"></i><em>${n}</em></div>`).join("");
+/* ---------- Statisztika + Admin ---------- */
+const nameOf = uid => AD.users.find(u=>u.id===uid)?.nick || AD.parts.find(p=>p.uid===uid)?.nick || "Játékos";
+const topN=(m,n)=>Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([l,c])=>({l,n:c}));
+function summarize(){
+  const per={mariah:{j:0,o:0},wham:{j:0,o:0},feliz:{j:0,o:0}}, city={}, circ={}, daily=new Array(72).fill(0), elimOf={};
+  AD.elims.forEach(e=>{
+    (elimOf[e.uid]??=new Set()).add(e.challenge); if(per[e.challenge]) per[e.challenge].o++;
+    const c=(e.settlement||"?").trim(); city[c]=(city[c]||0)+1; circ[e.circumstance]=(circ[e.circumstance]||0)+1;
+    const d=e.occurredAt?.toDate?.(); if(d&&d.getMonth()===11){const i=d.getDate()-1; const k=KEYS.indexOf(e.challenge); if(i>=0&&i<24&&k>=0) daily[i*3+k]++;}
+  });
+  AD.parts.forEach(p=>(p.challenges||[]).forEach(k=>per[k]&&per[k].j++));
+  const active=AD.parts.filter(p=>(elimOf[p.uid]?.size||0)<(p.challenges?.length||1)).length;
+  const dh=AD.parts.filter(p=>p.mode==="diehard"&&!(elimOf[p.uid]?.size));
+  return {year:YEAR,t:Date.now(),players:AD.parts.length,active,elims:AD.elims.length,
+    classic:AD.parts.filter(p=>p.mode!=="diehard").length,diehard:AD.parts.filter(p=>p.mode==="diehard").length,
+    multi:Object.values(elimOf).filter(x=>x.size>=2).length,per,city:topN(city,15),circ:topN(circ,10),daily,dhAlive:dh.length,_elimOf:elimOf,_dh:dh};
 }
-function dailyChart(){
-  const by=Array.from({length:24},()=>({mariah:0,wham:0,feliz:0}));
-  elims.forEach(e=>{const d=e.occurredAt?.toDate();if(!d||d.getMonth()!==11)return;const i=d.getDate()-1;if(i>=0&&i<24&&by[i][e.challenge]!=null)by[i][e.challenge]++});
-  const max=Math.max(1,...by.map(o=>o.mariah+o.wham+o.feliz)), bw=480/24, H=105;
-  let s=`<svg viewBox="0 0 480 140" style="width:100%" role="img" aria-label="Napi kiesések decemberben"><line x1="0" y1="120" x2="480" y2="120" stroke="#d3e5f3"/>`;
-  by.forEach((o,i)=>{let y=120;KEYS.forEach(k=>{const h=o[k]/max*H;if(h>0){y-=h;s+=`<rect x="${(i*bw+2).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-4).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${CH[k].accent}"/>`}});
-    if(i%3===0||i===23) s+=`<text x="${(i*bw+bw/2).toFixed(1)}" y="134" font-size="9" text-anchor="middle" fill="#6b86a0">${i+1}.</text>`});
-  return s+`</svg><div class="legend">${KEYS.map(k=>`<span><i style="background:${CH[k].accent}"></i>${CH[k].short}</span>`).join("")}<span>(december napjai)</span></div>`;
+function buildMapSnap(){
+  const g={};
+  AD.elims.forEach(e=>{
+    const c=(e.lat!=null&&e.lng!=null)?{lat:e.lat,lng:e.lng}:cityCoords(e.settlement); if(!c) return;
+    const o=(g[c.lat+","+c.lng]??={n:e.settlement,lat:c.lat,lng:c.lng,m:0,w:0,f:0}); o[CK[e.challenge]]++;
+  });
+  const dz=[];
+  AD.dangers.filter(d=>d.approved).forEach(d=>{
+    const c=cityCoords(d.settlement); if(!c) return;
+    let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h);
+    dz.push({p:d.place,s:d.settlement,c:d.category,sg:d.songs,r:d.riskLevel,note:d.note||"",lat:c.lat+((h%7)-3)*0.004,lng:c.lng+(((h>>3)%7)-3)*0.006});
+  });
+  return {year:YEAR,t:Date.now(),cells:Object.values(g),dz};
+}
+async function publishSnapshots(){
+  if(!isAdmin||!AD.loaded) return;
+  const {_elimOf,_dh,...snap}=summarize();
+  await setDoc(doc(db,"config","statsSnapshot"),snap);
+  await setDoc(doc(db,"config","mapSnapshot"),buildMapSnap());
+  ls.set("snap_mapSnapshot"+YEAR,null); ls.set("snap_statsSnapshot"+YEAR,null);
+}
+const bars=arr=>{ if(!arr||!arr.length) return `<div class="mut">Még nincs adat.</div>`; const m=arr[0].n; return arr.map(({l,n})=>`<div class="bar"><span class="l">${esc(l)}</span><i style="width:${Math.max(2,n/m*45)}%"></i><em>${n}</em></div>`).join(""); };
+function dailyChart(daily){
+  const tot=i=>daily[i*3]+daily[i*3+1]+daily[i*3+2];
+  const max=Math.max(1,...Array.from({length:24},(_,i)=>tot(i))), bw=480/24, H=105;
+  let svg=`<svg viewBox="0 0 480 140" style="width:100%" role="img" aria-label="Napi kiesések decemberben"><line x1="0" y1="120" x2="480" y2="120" stroke="#d3e5f3"/>`;
+  for(let i=0;i<24;i++){ let y=120; KEYS.forEach((k,j)=>{const h=daily[i*3+j]/max*H; if(h>0){y-=h; svg+=`<rect x="${(i*bw+2).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw-4).toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${CH[k].accent}"/>`}});
+    if(i%3===0||i===23) svg+=`<text x="${(i*bw+bw/2).toFixed(1)}" y="134" font-size="9" text-anchor="middle" fill="#6b86a0">${i+1}.</text>`; }
+  return svg+`</svg><div class="legend">${KEYS.map(k=>`<span><i style="background:${CH[k].accent}"></i>${CH[k].short}</span>`).join("")}<span>(december napjai)</span></div>`;
 }
 let pSearch="", pMode="all", pStat="all";
-function playersHtml(elimOf){
-  const list=parts.filter(p=>{
+function playersHtml(S){
+  const list=AD.parts.filter(p=>{
     if(pMode!=="all"&&p.mode!==pMode) return false;
-    const alive=(elimOf[p.uid]?.size||0)<(p.challenges?.length||1);
+    const alive=(S._elimOf[p.uid]?.size||0)<(p.challenges?.length||1);
     if(pStat==="alive"&&!alive) return false; if(pStat==="dead"&&alive) return false;
     if(pSearch.trim()&&!nameOf(p.uid).toLowerCase().includes(pSearch.trim().toLowerCase())) return false;
     return true;
   });
-  return list.length?list.slice(0,80).map(p=>{const lost=elimOf[p.uid]||new Set();
+  return list.length?list.slice(0,80).map(p=>{const lost=S._elimOf[p.uid]||new Set();
     return `<div class="row"><div><b>${esc(nameOf(p.uid))}</b> <span class="mut">(${p.mode==="diehard"?"Die Hard":"Hagyományos"})</span></div><div>${(p.challenges||[]).map(k=>`<span class="tag ${lost.has(k)?"dead":"alive"}">${CH[k].short}: ${lost.has(k)?"kiesett":"bent"}</span>`).join(" ")}</div></div>`}).join(""):"<span class='mut'>Nincs találat.</span>";
 }
-function pageStats(b){
-  if(!hasAll()){b.innerHTML=`<div class="card">A statisztika egyelőre zárolt.</div>`;return}
-  if(!ready){b.innerHTML="<p class='mut'>Betöltés…</p>";return}
-  const per={},byCity={},byCirc={},elimOf={};
-  KEYS.forEach(k=>per[k]={joined:0,out:0});
-  elims.forEach(e=>{(elimOf[e.uid]??=new Set()).add(e.challenge);per[e.challenge]&&per[e.challenge].out++;
-    const c=(e.settlement||"?").trim();byCity[c]=(byCity[c]||0)+1;byCirc[e.circumstance]=(byCirc[e.circumstance]||0)+1});
-  parts.forEach(p=>(p.challenges||[]).forEach(k=>per[k]&&per[k].joined++));
-  const active=parts.filter(p=>(elimOf[p.uid]?.size||0)<(p.challenges?.length||1)).length;
-  const multi=Object.values(elimOf).filter(s=>s.size>=2).length;
-  const dhAlive=parts.filter(p=>p.mode==="diehard"&&!(elimOf[p.uid]?.size));
-  const recent=[...elims].sort((a,c)=>(c.reportedAt?.seconds||0)-(a.reportedAt?.seconds||0)).slice(0,20);
-  b.innerHTML=`<div class="grid"><div class="card"><div class="num">${parts.length}</div><div class="mut">játékos</div></div><div class="card"><div class="num">${active}</div><div class="mut">még játékban</div></div><div class="card"><div class="num">${elims.length}</div><div class="mut">kiesés</div></div></div>
-  <div class="card"><span class="mut">🎄 Hagyományos: <b>${parts.filter(p=>p.mode!=="diehard").length}</b> · 🔥 Die Hard: <b>${parts.filter(p=>p.mode==="diehard").length}</b><br>Több fronton is kiesett játékos: <b>${multi}</b></span></div>
-  <h2>Kiesések frontonként</h2><div class="card">${KEYS.map(k=>{const pct=per[k].joined?Math.round(per[k].out/per[k].joined*100):0;return `<div class="bar"><span class="l">${CH[k].ico} ${CH[k].short}</span><i style="width:${Math.max(2,pct*0.45)}%"></i><em>${per[k].out}/${per[k].joined} (${pct}%)</em></div>`}).join("")}</div>
-  <h2>Napi kiesések (dec. 1–24.)</h2><div class="card">${dailyChart()}</div>
-  <h2>Legveszélyesebb települések</h2><div class="card">${bars(byCity)}</div>
-  <h2>Legveszélyesebb helyzetek</h2><div class="card">${bars(byCirc,9)}</div>
-  <h2>Die Hard túlélők, akik még sehol nem estek ki (${dhAlive.length})</h2><div class="card">${dhAlive.length?dhAlive.slice(0,40).map(p=>esc(nameOf(p.uid))).join(" · "):"<span class='mut'>Még senki.</span>"}</div>
-  <h2>Hírfolyam</h2><div class="card feed">${recent.length?recent.map(e=>`<div>${CH[e.challenge]?.ico||"💀"} <b>${esc(nameOf(e.uid))}</b> kiesett: ${CH[e.challenge]?.name} — ${esc(e.settlement)} (${esc(e.circumstance)}), ${fmt(e.occurredAt)}${e.story?`<div class="mut">„${esc(e.story)}”</div>`:""}</div>`).join(""):"<span class='mut'>Még nincs kiesés.</span>"}</div>
+function statsHtml(S,admin){
+  return `<div class="grid"><div class="card"><div class="num">${S.players}</div><div class="mut">játékos</div></div><div class="card"><div class="num">${S.active}</div><div class="mut">még játékban</div></div><div class="card"><div class="num">${S.elims}</div><div class="mut">kiesés</div></div></div>
+  <div class="card"><span class="mut">🎄 Hagyományos: <b>${S.classic}</b> · 🔥 Die Hard: <b>${S.diehard}</b><br>Több fronton is kiesett játékos: <b>${S.multi}</b> · Die Hardban még sehol nem esett ki: <b>${S.dhAlive}</b></span></div>
+  <h2>Kiesések frontonként</h2><div class="card">${KEYS.map(k=>{const p=S.per[k],pct=p.j?Math.round(p.o/p.j*100):0;return `<div class="bar"><span class="l">${CH[k].ico} ${CH[k].short}</span><i style="width:${Math.max(2,pct*0.45)}%"></i><em>${p.o}/${p.j} (${pct}%)</em></div>`}).join("")}</div>
+  <h2>Napi kiesések (dec. 1–24.)</h2><div class="card">${dailyChart(S.daily)}</div>
+  <h2>Legveszélyesebb települések</h2><div class="card">${bars(S.city)}</div>
+  <h2>Legveszélyesebb helyzetek</h2><div class="card">${bars(S.circ)}</div>
+  <p class="mut" style="text-align:center">Állapot: ${stamp(S.t)}${admin?" (élő, az admin adataiból)":" (kb. óránként frissül)"}</p>`+
+  (admin?`<h2>Die Hard túlélők, akik még sehol nem estek ki (${S._dh.length})</h2><div class="card">${S._dh.length?S._dh.slice(0,40).map(p=>esc(nameOf(p.uid))).join(" · "):"<span class='mut'>Még senki.</span>"}</div>
+  <h2>Hírfolyam</h2><div class="card feed">${AD.elims.length?[...AD.elims].sort((a,c)=>(c.reportedAt?.seconds||0)-(a.reportedAt?.seconds||0)).slice(0,20).map(e=>`<div>${CH[e.challenge]?.ico||"💀"} <b>${esc(nameOf(e.uid))}</b> kiesett: ${CH[e.challenge]?.name} — ${esc(e.settlement)} (${esc(e.circumstance)}), ${fmt(e.occurredAt)}${e.story?`<div class="mut">„${esc(e.story)}”</div>`:""}</div>`).join(""):"<span class='mut'>Még nincs kiesés.</span>"}</div>
   <h2>Játékosok</h2><div class="card"><input id="ps" placeholder="Keresés becenévre…" value="${esc(pSearch)}">
    <div class="row" style="gap:8px"><select id="pm" style="flex:1"><option value="all">Minden mód</option><option value="classic" ${pMode==="classic"?"selected":""}>Hagyományos</option><option value="diehard" ${pMode==="diehard"?"selected":""}>Die Hard</option></select>
    <select id="pst" style="flex:1"><option value="all">Mindenki</option><option value="alive" ${pStat==="alive"?"selected":""}>Bent van</option><option value="dead" ${pStat==="dead"?"selected":""}>Kiesett</option></select></div>
-   <div class="feed" id="plist">${playersHtml(elimOf)}</div></div>`;
-  const upd=()=>{$("#plist").innerHTML=playersHtml(elimOf)};
-  $("#ps").oninput=e=>{pSearch=e.target.value;upd()}; $("#pm").onchange=e=>{pMode=e.target.value;upd()}; $("#pst").onchange=e=>{pStat=e.target.value;upd()};
+   <div class="feed" id="plist">${playersHtml(S)}</div></div>`:"");
 }
-
-/* ---------- Admin ---------- */
-const csvCell = x => { let s=String(x??""); if(/^[=+\-@]/.test(s)) s="'"+s; return `"${s.replace(/"/g,'""')}"`; };
+function pageStats(b){
+  if(isAdmin){
+    if(!AD.loaded){ b.innerHTML="<p class='mut'>Betöltés…</p>"; loadAdminData(); return; }
+    const S=summarize(); b.innerHTML=statsHtml(S,true);
+    const upd=()=>{$("#plist").innerHTML=playersHtml(S)};
+    $("#ps").oninput=e=>{pSearch=e.target.value;upd()}; $("#pm").onchange=e=>{pMode=e.target.value;upd()}; $("#pst").onchange=e=>{pStat=e.target.value;upd()};
+    return;
+  }
+  if(!statsPublic){ b.innerHTML=`<div class="card">A statisztika egyelőre zárolt.</div>`; return; }
+  b.innerHTML="<p class='mut'>Betöltés…</p>";
+  cachedDoc("statsSnapshot",10*60e3).then(S=>{ if(pageName!=="stats") return; const el=$("#pbody"); if(el) el.innerHTML=S&&S.year===YEAR?statsHtml(S,false):`<div class="card">Még nincs közzétett statisztika.</div>`; });
+}
+const csvCell = x => { let t=String(x??""); if(/^[=+\-@]/.test(t)) t="'"+t; return `"${t.replace(/"/g,'""')}"`; };
 function pageAdmin(b){
   if(!isAdmin){b.innerHTML=`<div class="card">Nincs admin jogosultságod.</div>`;return}
-  const pend=dangers.filter(d=>!d.approved), ok=dangers.filter(d=>d.approved);
-  b.innerHTML=`<div class="card"><label class="chk"><input type="checkbox" id="pub" ${statsPublic?"checked":""}> <b>Statisztika és kiesés-térkép nyilvános mindenkinek</b></label><p class="mut" style="margin:0">Kikapcsolva csak az admin látja. Bekapcsolva minden bejelentkezett játékos látja a statisztikát és a teljes térképet.</p></div>
-  <div class="card"><label>Év (megjelenített adatok)</label><select id="yr">${YEARS.map(y=>`<option ${y===YEAR?"selected":""}>${y}</option>`).join("")}</select>
-   <div class="mut">Játékosok: ${parts.length} · Kiesések: ${elims.length} · Kerülendő helyek: ${dangers.length} (várakozik: ${pend.length})</div>
-   <div style="margin-top:10px"><button id="csv">📊 Kiesések CSV-export</button></div></div>
+  if(!AD.loaded){b.innerHTML="<p class='mut'>Betöltés…</p>";loadAdminData();return}
+  const pend=AD.dangers.filter(d=>!d.approved), ok=AD.dangers.filter(d=>d.approved);
+  b.innerHTML=`<div class="card"><label class="chk"><input type="checkbox" id="pub" ${statsPublic?"checked":""}> <b>Statisztika nyilvános (bejelentkezett játékosoknak)</b></label><p class="mut" style="margin:0">A térkép mindenkinek látszik. A statisztika csak akkor, ha ezt bekapcsolod – és csak összesített számokat mutat.</p></div>
+  <div class="card"><label>Év</label><select id="yr">${YEARS.map(y=>`<option ${y===YEAR?"selected":""}>${y}</option>`).join("")}</select>
+   <div class="mut">Játékosok: ${AD.parts.length} · Kiesések: ${AD.elims.length} · Kerülendő helyek: ${AD.dangers.length} (várakozik: ${pend.length})<br>Adatok betöltve: ${stamp(AD.t)}</div>
+   <div class="row" style="margin-top:10px;gap:8px"><button id="refr">🔄 Adatok frissítése</button><button id="pubsnap" class="pri">📤 Térkép és statisztika közzététele</button><button id="csv">📊 CSV-export</button></div>
+   <p class="mut" style="margin:8px 0 0">A közzététel automatikusan is megtörténik, ha 30 percnél régebbi, és te megnyitod a térképet, a statisztikát vagy az admint. Így a játékosok 1–2 olvasással látják az adatokat.</p></div>
   <h2>Kerülendő helyek – jóváhagyásra vár (${pend.length})</h2><div class="card feed">${pend.length?pend.map(d=>dzRow(d,true)).join(""):"<span class='mut'>Nincs várakozó jelzés.</span>"}</div>
   <h2>Jóváhagyott kerülendő helyek (${ok.length})</h2><div class="card feed">${ok.length?ok.map(d=>dzRow(d,false)).join(""):"<span class='mut'>Nincs adat.</span>"}</div>
-  <h2>Kiesések moderálása (${elims.length})</h2><div class="card feed">${elims.length?[...elims].sort((a,c)=>(c.occurredAt?.seconds||0)-(a.occurredAt?.seconds||0)).map(e=>`<div class="row"><div><b>${esc(nameOf(e.uid))}</b> · ${CH[e.challenge]?.short} · ${esc(e.settlement)} (${esc(e.circumstance)}) – ${fmt(e.occurredAt)}</div><button class="sm" data-del-elim="${e.id}">Törlés</button></div>`).join(""):"<span class='mut'>Nincs adat.</span>"}</div>`;
-  $("#pub").onchange=async ev=>{try{await setDoc(doc(db,"config","public"),{statsPublic:ev.target.checked})}catch(e){alert(msg(e));ev.target.checked=!ev.target.checked}};
-  $("#yr").onchange=ev=>{YEAR=Number(ev.target.value);subscribe();render()};
+  <h2>Kiesések moderálása (${AD.elims.length})</h2><div class="card feed">${AD.elims.length?[...AD.elims].sort((a,c)=>(c.occurredAt?.seconds||0)-(a.occurredAt?.seconds||0)).slice(0,100).map(e=>`<div class="row"><div><b>${esc(nameOf(e.uid))}</b> · ${CH[e.challenge]?.short} · ${esc(e.settlement)} (${esc(e.circumstance)}) – ${fmt(e.occurredAt)}</div><button class="sm" data-del-elim="${e.id}">Törlés</button></div>`).join(""):"<span class='mut'>Nincs adat.</span>"}</div>`;
+  $("#pub").onchange=async ev=>{try{await setDoc(doc(db,"config","public"),{statsPublic:ev.target.checked});statsPublic=ev.target.checked;ls.set("snap_public"+YEAR,null)}catch(e){alert(msg(e));ev.target.checked=!ev.target.checked}};
+  $("#yr").onchange=ev=>{YEAR=Number(ev.target.value);AD.loaded=false;subscribe();loadAdminData(true)};
+  $("#refr").onclick=()=>loadAdminData(true);
+  $("#pubsnap").onclick=async()=>{try{await publishSnapshots();alert("Közzétéve ✓")}catch(e){alert(msg(e))}};
   $("#csv").onclick=()=>{
     const rows=[["Jatekos","Kihivas","Telepules","Helyszin","Korulmeny","Idopont","Tortenet"].map(csvCell).join(";"),
-      ...elims.map(e=>[nameOf(e.uid),CH[e.challenge]?.name,e.settlement,e.place,e.circumstance,e.occurredAt?.toDate().toISOString()||"",e.story].map(csvCell).join(";"))];
+      ...AD.elims.map(e=>[nameOf(e.uid),CH[e.challenge]?.name,e.settlement,e.place,e.circumstance,e.occurredAt?.toDate().toISOString()||"",e.story].map(csvCell).join(";"))];
     const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob(["﻿"+rows.join("\n")],{type:"text/csv;charset=utf-8;"})); a.download=`kiesesek-${YEAR}.csv`; a.click();
   };
-  b.querySelectorAll("[data-del-elim]").forEach(x=>x.onclick=()=>confirm("Törlöd ezt a kiesést?")&&deleteDoc(doc(db,"eliminations",x.dataset.delElim)));
-  b.querySelectorAll("[data-del-dz]").forEach(x=>x.onclick=()=>confirm("Törlöd ezt a jelzést?")&&deleteDoc(doc(db,"dangerZones",x.dataset.delDz)));
-  b.querySelectorAll("[data-ok-dz]").forEach(x=>x.onclick=()=>updateDoc(doc(db,"dangerZones",x.dataset.okDz),{approved:true}));
+  const del=async(c,id,t)=>{ if(!confirm(t)) return; try{await deleteDoc(doc(db,c,id)); await loadAdminData(true)}catch(e){alert(msg(e))} };
+  b.querySelectorAll("[data-del-elim]").forEach(x=>x.onclick=()=>del("eliminations",x.dataset.delElim,"Törlöd ezt a kiesést?"));
+  b.querySelectorAll("[data-del-dz]").forEach(x=>x.onclick=()=>del("dangerZones",x.dataset.delDz,"Törlöd ezt a jelzést?"));
+  b.querySelectorAll("[data-ok-dz]").forEach(x=>x.onclick=async()=>{try{await updateDoc(doc(db,"dangerZones",x.dataset.okDz),{approved:true});await loadAdminData(true)}catch(e){alert(msg(e))}});
 }
-const dzRow=(d,pending)=>`<div class="row"><div><b>${esc(d.place)}</b> (${esc(d.settlement)}) · ${esc(d.category)}<br><span class="mut">${(d.songs||[]).map(s=>CH[s]?.short).join(", ")} · ${d.riskLevel==="extreme"?"🚨 extrém":"⚠️ magas"} · ${esc(nameOf(d.uid))}${d.note?` · „${esc(d.note)}”`:""}</span></div><div>${pending?`<button class="sm on" data-ok-dz="${d.id}">Jóváhagyás</button> `:""}<button class="sm" data-del-dz="${d.id}">Törlés</button></div></div>`;
+const dzRow=(d,pending)=>`<div class="row"><div><b>${esc(d.place)}</b> (${esc(d.settlement)}) · ${esc(d.category)}<br><span class="mut">${(d.songs||[]).map(x=>CH[x]?.short).join(", ")} · ${d.riskLevel==="extreme"?"🚨 extrém":"⚠️ magas"} · ${esc(nameOf(d.uid))}${d.note?` · „${esc(d.note)}”`:""}${cityCoords(d.settlement)?"":" · ⚠️ nincs koordináta a listában (nem kerül a térképre)"}</span></div><div>${pending?`<button class="sm on" data-ok-dz="${d.id}">Jóváhagyás</button> `:""}<button class="sm" data-del-dz="${d.id}">Törlés</button></div></div>`;
 
 /* ---------- Sheetek ---------- */
 const modal=h=>{const m=$("#modal");m.innerHTML=`<div>${h}</div>`;m.classList.remove("hide")};
 const closeModal=()=>$("#modal").classList.add("hide");
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
-const msg=e=>({"auth/invalid-credential":"Hibás e-mail vagy jelszó.","auth/email-already-in-use":"Ez az e-mail már regisztrálva van.","auth/weak-password":"A jelszó legyen legalább 6 karakter.","auth/invalid-email":"Érvénytelen e-mail-cím.","auth/popup-closed-by-user":"A belépési ablakot bezártad.","permission-denied":"Ehhez nincs jogosultságod (vagy a játék ideje még nem kezdődött el)."}[e.code]||("Hiba: "+(e.code||e.message)));
+const msg=e=>({"auth/invalid-credential":"Hibás e-mail vagy jelszó.","auth/email-already-in-use":"Ez az e-mail már regisztrálva van.","auth/weak-password":"A jelszó legyen legalább 6 karakter.","auth/invalid-email":"Érvénytelen e-mail-cím.","auth/popup-closed-by-user":"A belépési ablakot bezártad.","permission-denied":"Ehhez nincs jogosultságod (vagy a játék ideje még nem kezdődött el).","auth/missing-email":"Add meg az e-mail-címedet.","auth/too-many-requests":"Túl sok próbálkozás, várj egy kicsit."}[e.code]||(String(e.code||"").startsWith("auth/api-key")?"Hibás Firebase API-kulcs az app beállításában.":"Hiba: "+(e.code||e.message)));
 
 function loginModal(){
   modal(`<div class="grip"></div><h3 style="margin:0 0 10px">Belépés</h3>
-  <button class="wide" style="margin-bottom:8px" id="g">Belépés Google-lel</button>
-  <button class="wide" style="margin-bottom:14px" id="f">Belépés Facebookkal</button>
+  <button class="wide" style="margin-bottom:14px" id="g">Belépés Google-lel</button>
   <div class="mut" style="margin-bottom:6px">vagy e-mail + jelszó:</div>
   <input id="em" type="email" autocomplete="email" placeholder="e-mail"><input id="pw" type="password" autocomplete="current-password" placeholder="jelszó (min. 6 karakter)">
   <div class="err" id="er"></div>
-  <div class="row"><button id="li" class="pri">Belépés</button><button id="re">Regisztráció</button><button id="x">Mégse</button></div>`);
+  <div class="row"><button id="li" class="pri">Belépés</button><button id="re">Regisztráció</button><button id="x">Mégse</button></div>
+  <p style="margin:12px 0 0"><a href="#" id="fp" style="color:var(--blue)">Elfelejtett jelszó?</a></p>`);
   const run=async fn=>{try{await fn();closeModal()}catch(e){$("#er").textContent=msg(e)}};
-  const social=P=>run(async()=>{ try{ await signInWithPopup(auth,new P()) }catch(e){ if(e.code==="auth/popup-blocked"||standalone()) await signInWithRedirect(auth,new P()); else throw e } });
-  $("#g").onclick=()=>social(GoogleAuthProvider);
-  $("#f").onclick=()=>social(FacebookAuthProvider);
+  $("#g").onclick=()=>run(async()=>{ try{ await signInWithPopup(auth,new GoogleAuthProvider()) }catch(e){ if(e.code==="auth/popup-blocked"||standalone()) await signInWithRedirect(auth,new GoogleAuthProvider()); else throw e } });
   $("#li").onclick=()=>run(()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value));
   $("#re").onclick=()=>run(async()=>{const c=await createUserWithEmailAndPassword(auth,$("#em").value,$("#pw").value);try{await sendEmailVerification(c.user)}catch{}});
+  $("#fp").onclick=async e=>{ e.preventDefault(); const em=$("#em").value.trim(), er=$("#er");
+    if(!em){er.style.color="";er.textContent="Írd be fent az e-mail-címedet, aztán koppints újra ide.";return}
+    try{ await sendPasswordResetEmail(auth,em); er.style.color="var(--grn)"; er.textContent="Ha van ilyen fiók, elküldtük a jelszó-visszaállító e-mailt (nézd meg a spam mappát is)."; }
+    catch(err){ er.style.color=""; er.textContent=msg(err) } };
   $("#x").onclick=closeModal;
 }
 
@@ -767,7 +880,8 @@ function onboarding(){
   <label>Játékmód</label>
   <div class="mode-grid"><button type="button" class="mode-card active" data-m="classic"><b>🎄 Hagyományos</b><span>Mariahrmageddonnal indulsz; kiesés után jön a Wham, majd a Feliz.</span></button>
   <button type="button" class="mode-card" data-m="diehard"><b>🔥 Die Hard</b><span>Mindhárom fronton egyszerre indulsz.</span></button></div>
-  <label class="chk"><input type="checkbox" id="pubp" checked> <span>A nevem látszhat a nyilvános statisztikában</span></label>
+  <label class="chk"><input type="checkbox" id="pubp" checked> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
+  <label class="chk"><input type="checkbox" id="remb"> <span>📧 Küldjetek „Élsz még?” emlékeztetőt, ha 3 napig nem lépek be</span></label>
   <p class="mut">Az e-mail-címed soha nem jelenik meg nyilvánosan.</p>
   <div class="err" id="er"></div>
   <button class="pri wide" id="ok">Indulhat a túlélés!</button><button class="wide" style="margin-top:8px" id="out">Mégse / kilépés</button>`);
@@ -776,7 +890,7 @@ function onboarding(){
   $("#ok").onclick=async()=>{
     const nick=userDoc?userDoc.nick:$("#nick").value.trim(), key=userDoc?userDoc.nickKey:slug(nick);
     if(nick.length<3||key.length<3) return $("#er").textContent="A becenév legalább 3 (betű vagy szám) karakter legyen.";
-    const pub=$("#pubp").checked, chs=mode==="diehard"?[...KEYS]:["mariah"];
+    const pub=$("#pubp").checked, wantRem=$("#remb").checked, chs=mode==="diehard"?[...KEYS]:["mariah"];
     try{
       await runTransaction(db,async t=>{
         if(!userDoc){
@@ -787,7 +901,7 @@ function onboarding(){
         }
         t.set(doc(db,"participations",`${YEAR}_${user.uid}`),{uid:user.uid,year:YEAR,nick:pub?nick:"Rejtőzködő túlélő",mode,challenges:chs,publicProfile:pub,joinedAt:serverTimestamp()});
       });
-      userDoc=userDoc||{nick,nickKey:key}; closeModal(); render();
+      userDoc=userDoc||{nick,nickKey:key}; closeModal(); render(); if(wantRem) setReminder(true).catch(console.error); setTimeout(checkPendingTeam,800);
     }catch(e){$("#er").textContent=e.message==="taken"?"Ez a becenév már foglalt, válassz másikat.":msg(e)}
   };
 }
@@ -864,7 +978,7 @@ function reportSheet(k,existing){
       if(myPart.mode==="classic"&&NEXT[k]&&!joinedOf(NEXT[k])){
         try{ await updateDoc(doc(db,"participations",myPart.id),{challenges:[...new Set([...(myPart.challenges||[]),NEXT[k]])]}); opened=NEXT[k]; }catch(err){console.error(err)}
       }
-      setTimeout(()=>doneSheet(k,data,opened),150);
+      setTimeout(()=>doneSheet(k,data,opened),150); setTimeout(afterElim,900);
     }catch(err){er.textContent=msg(err)}
   };
 }
@@ -872,13 +986,13 @@ function reportSheet(k,existing){
 /* Megosztás */
 function shareText(k,e){
   const t=e.occurredAt.toDate();
-  return `🖤 Szomorúan tudatom, hogy az Úr ${YEAR}. évében ${t.toLocaleDateString("hu-HU",{month:"long",day:"numeric"})} ${t.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}-kor kiestem a ${CH[k].name} kihíváson. (${e.settlement}${e.place?", "+e.place:""} – ${e.circumstance}) ${CH[k].tag}\n\n🎄 Szervező: Kecskeméti Fiatalok Társasága – ${FB_PAGE_SHOW}\n📲 Játssz te is: ${appUrl()}`;
+  return `🖤 Szomorúan tudatom, hogy az Úr ${YEAR}. évében ${t.toLocaleDateString("hu-HU",{month:"long",day:"numeric"})} ${t.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}-kor kiestem a ${CH[k].name} kihíváson. (${e.settlement}${e.place?", "+e.place:""} – ${e.circumstance}) ${CH[k].tag}\n\n🎄 Szervező: Kecskeméti Fiatalok Társasága – ${FB_PAGE_SHOW}\n📲 Játssz te is: ${APP_URL}\n\n${MOTTO}`;
 }
-async function fbShare(text,tag){
+async function fbShare(text,tag,url){
   try{await navigator.clipboard.writeText(text)}catch{}
-  const u=appUrl().startsWith("http")?appUrl():FB_PAGE_URL;
-  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(u)}&hashtag=${encodeURIComponent(tag)}`,"_blank","noopener");
+  window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url||APP_URL)}&hashtag=${encodeURIComponent(tag)}`,"_blank","noopener");
 }
+function afterElim(){ touchRem(true); if(TEAMS&&TEAMS.length) syncMyTeamEntries().then(()=>render()); else loadTeams(true); }
 function doneSheet(k,d,opened){
   const text=shareText(k,d);
   modal(`<div class="grip"></div><h3 style="margin:0 0 6px">💀 Rögzítettük a kiesésed</h3>
@@ -886,21 +1000,23 @@ function doneSheet(k,d,opened){
   <textarea id="tx" rows="7">${esc(text)}</textarea>
   <button class="fb wide" id="fb">📘 Megosztás Facebookon</button>
   <p class="mut" style="margin:4px 0 8px" id="fbhint">A poszt szövegét a vágólapra másoljuk – a Facebookon illeszd be (a Facebook nem enged előre kitöltött szöveget).</p>
-  <div class="row"><button id="cp">📋 Szöveg másolása</button><button id="pc">🖼️ Képeslap</button><button id="x">Bezár</button></div>
+  <div class="row"><button id="cp">📋 Szöveg másolása</button><button id="pc">🖼️ Képeslap</button><button id="inv2">👥 Barát meghívása</button><button id="x">Bezár</button></div>
   ${opened?`<div class="notice" style="margin-top:12px">Vígaszág: megnyílt a <b>${CH[opened].name}</b> – a „${CH[opened].song}” elkerülésével bent maradhatsz.</div>`:(k==="feliz"||(myPart&&myPart.mode==="diehard"&&!NEXT[k])?"":"")}`);
   $("#x").onclick=()=>{closeModal();render()};
   $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText($("#tx").value);$("#cp").textContent="Másolva ✓"}catch{$("#tx").select()}};
   $("#fb").onclick=()=>fbShare($("#tx").value,CH[k].tag);
   $("#pc").onclick=()=>postcardModal(k,d);
+  $("#inv2").onclick=()=>inviteSheet();
 }
 function detailModal(k){
   const e=myElim(k);
   modal(`<div class="grip"></div><h3 style="margin:0 0 6px">${CH[k].ico} ${CH[k].name} – kiestél</h3>
   <div class="card" style="margin:0 0 10px"><div>${fmt(e.occurredAt)}</div><div>${esc(e.settlement)}${e.place?", "+esc(e.place):""}</div><div class="mut">${esc(e.circumstance)}</div>${e.story?`<div class="mut">„${esc(e.story)}”</div>`:""}</div>
-  <div class="row"><button id="sh" class="fb">📘 Megosztás</button><button id="pc">🖼️ Képeslap</button><button id="ed">Szerkesztés</button><button id="x">Bezár</button></div>`);
+  <div class="row"><button id="sh" class="fb">📘 Megosztás</button><button id="pc">🖼️ Képeslap</button><button id="ed">Szerkesztés</button><button id="inv2">👥 Meghívás</button><button id="x">Bezár</button></div>`);
   $("#x").onclick=closeModal;
   $("#ed").onclick=()=>reportSheet(k,e);
   $("#sh").onclick=()=>doneSheet(k,e,null);
+  $("#inv2").onclick=()=>inviteSheet();
   $("#pc").onclick=()=>postcardModal(k,e);
 }
 
@@ -924,7 +1040,7 @@ function drawPostcard(cv,k,e){
   ctx.fillStyle="#cbd5e1"; ctx.fillText(`🎧 ${e.circumstance}`,W/2,1005);
   ctx.fillStyle="#94a3b8"; ctx.font="700 30px system-ui,sans-serif"; ctx.fillText(c.tag,W/2,1130);
   ctx.fillStyle="#64748b"; ctx.font="500 26px system-ui,sans-serif"; ctx.fillText("Kecskeméti Fiatalok Társasága · "+FB_PAGE_SHOW,W/2,1230);
-  ctx.fillStyle="#475569"; ctx.font="500 22px system-ui,sans-serif"; ctx.fillText(appUrl().replace(/^https?:\/\//,"").slice(0,60),W/2,1275);
+  ctx.fillStyle="#475569"; ctx.font="500 22px system-ui,sans-serif"; ctx.fillText(APP_URL.replace(/^https?:\/\//,"").slice(0,60),W/2,1275);
 }
 function postcardModal(k,e){
   modal(`<div class="grip"></div><h3 style="margin:0 0 8px">Megosztható képeslap (PNG)</h3>
@@ -939,58 +1055,219 @@ function postcardModal(k,e){
     try{ if(navigator.canShare({files:[f]})) await navigator.share({files:[f],text:shareText(k,e)}); else $("#dl").click(); }catch{} },"image/png"); });
 }
 
-/* ---------- Mini játék: Fülvédő futam ---------- */
-let G=null;
+/* ---------- Jelvények ---------- */
+const TIERS=[["Kiscserkész","🏕️"],["Profi túlélő","🛡️"],["Zenei Rambo","🎖️"],["Neo","🕶️"],["Karácsonyi legenda","👑"]];
+function finalOutMs(){
+  if(!myPart) return null; const o={}; myElims().forEach(e=>o[e.challenge]=e.occurredAt.toDate().getTime());
+  if(myPart.mode==="diehard") return KEYS.every(k=>o[k])?Math.max(...KEYS.map(k=>o[k])):null;
+  return o.feliz||null;
+}
+function survDays(){
+  if(!myPart) return 0; const b=bounds(); const j=myPart.joinedAt?.toDate?.().getTime()||0;
+  const start=Math.max(j,b.start.getTime()), end=Math.min(finalOutMs()||Infinity,b.end.getTime(),nowDate().getTime());
+  return Math.max(0,(end-start)/DAY);
+}
+function tierInfo(){ const d=survDays(), i=Math.min(4,Math.floor(d/5)); return {i,d,left:Math.max(1,Math.ceil(5*(i+1)-d))}; }
+
+/* ---------- Meghívás + baráti csapatok ---------- */
+function inviteText(code){
+  const url=code?`${APP_URL}?team=${code}`:APP_URL;
+  return `🎄 Meghívlak a Karácsonyi Túlélőközpontba! Mariahrmageddon, Whamageddon, Feliznavidageddon – december 1-től karácsonyig kerüld el a három dalt, és versenyezzünk, ki éli túl tovább! 😈\n👉 ${url}\n\n${MOTTO}`;
+}
+function inviteSheet(code){
+  const text=inviteText(code), url=code?`${APP_URL}?team=${code}`:APP_URL;
+  modal(`<div class="grip"></div><h3 style="margin:0 0 6px">👥 Barát meghívása</h3>
+  <p class="mut" style="margin:0 0 8px">${code?"Ezzel a linkkel a barátod egyből a csapatodba kerül.":"Küldd el a barátaidnak, és versenyezzetek, ki éli túl tovább!"}</p>
+  <textarea id="tx" rows="6">${esc(text)}</textarea>
+  ${navigator.share?`<button class="pri wide" id="shn">📤 Küldés…</button>`:""}
+  <button class="fb wide" style="margin-top:8px" id="fb">📘 Megosztás Facebookon</button>
+  <div class="row" style="margin-top:8px"><button id="cp">📋 Másolás</button><button id="x">Bezár</button></div>`);
+  $("#x").onclick=closeModal;
+  $("#shn")?.addEventListener("click",async()=>{ try{ await navigator.share({text:$("#tx").value}) }catch(e){} });
+  $("#fb").onclick=()=>fbShare($("#tx").value,"#mariahrmageddon",url);
+  $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText($("#tx").value);$("#cp").textContent="Másolva ✓"}catch{$("#tx").select()}};
+}
+const ALPH="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const newCode=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>ALPH[b%ALPH.length]).join("");
+const myEntry=()=>({nick:myPart.nick,mode:myPart.mode,outs:Object.fromEntries(myElims().map(e=>[e.challenge,e.occurredAt.toDate().getTime()]))});
+const sameEntry=(a,b)=>!!a&&a.nick===b.nick&&a.mode===b.mode&&JSON.stringify(Object.entries(a.outs||{}).sort())===JSON.stringify(Object.entries(b.outs||{}).sort());
+async function loadTeams(force){
+  if(!user||!myPart||teamsLoading) return; if(TEAMS&&!force) return;
+  teamsLoading=true;
+  try{ const sn=await getDocs(query(collection(db,"teams"),where("memberIds","array-contains",user.uid))); TEAMS=sn.docs.map(d=>({id:d.id,...d.data()})).filter(t=>t.year===YEAR); }
+  catch(e){ console.error(e); TEAMS=TEAMS||[]; }
+  teamsLoading=false; await syncMyTeamEntries(); render();
+}
+async function syncMyTeamEntries(){
+  if(!myPart||!user) return; const mine=myEntry();
+  for(const t of TEAMS||[]){
+    if(sameEntry(t.members?.[user.uid],mine)) continue;
+    try{ await updateDoc(doc(db,"teams",t.id),{[`members.${user.uid}`]:mine}); (t.members??={})[user.uid]=mine; }catch(e){console.error(e)}
+  }
+}
+async function createTeam(name){
+  const code=newCode();
+  await setDoc(doc(db,"teams",code),{name,year:YEAR,owner:user.uid,memberIds:[user.uid],members:{[user.uid]:myEntry()},createdAt:serverTimestamp()});
+  await loadTeams(true); return code;
+}
+async function joinTeam(code){
+  const ref=doc(db,"teams",code.toUpperCase()), sn=await getDoc(ref);
+  if(!sn.exists()) throw new Error("Nincs ilyen csapat.");
+  const t=sn.data(); if(t.year!==YEAR) throw new Error("Ez a csapat másik évre szól.");
+  if((t.memberIds||[]).includes(user.uid)) return;
+  if((t.memberIds||[]).length>=12) throw new Error("A csapat megtelt (legfeljebb 12 fő).");
+  await updateDoc(ref,{memberIds:[...t.memberIds,user.uid],[`members.${user.uid}`]:myEntry()});
+  await loadTeams(true);
+}
+async function leaveTeam(t,silent){
+  if(!silent&&!confirm(`Kilépsz a(z) „${t.name}” csapatból?`)) return;
+  await updateDoc(doc(db,"teams",t.id),{memberIds:(t.memberIds||[]).filter(x=>x!==user.uid),[`members.${user.uid}`]:deleteField()});
+  if(!silent) await loadTeams(true);
+}
+function checkPendingTeam(){
+  const code=ls.get("pendingTeam",null); if(!code||!user||!myPart) return;
+  ls.set("pendingTeam",null);
+  getDoc(doc(db,"teams",code)).then(sn=>{
+    if(!sn.exists()){ modal(`<div class="grip"></div><h3>Meghívó</h3><p>Ez a meghívó nem érvényes.</p><button class="wide" id="x">Rendben</button>`);$("#x").onclick=closeModal;return }
+    const t=sn.data(); if((t.memberIds||[]).includes(user.uid)){ openPage("teams"); return }
+    modal(`<div class="grip"></div><h3 style="margin:0 0 6px">👥 Meghívót kaptál</h3><p>Csatlakozol a(z) <b>${esc(t.name)}</b> csapathoz? (${(t.memberIds||[]).length} tag)</p>
+      <div class="err" id="er"></div><button class="pri wide" id="jn">Csatlakozom</button><button class="wide" style="margin-top:8px" id="x">Most nem</button>`);
+    $("#x").onclick=closeModal;
+    $("#jn").onclick=async()=>{ try{ await joinTeam(code); closeModal(); openPage("teams") }catch(e){ $("#er").textContent=e.code?msg(e):e.message } };
+  }).catch(e=>console.error(e));
+}
+function memberStat(m){
+  const o=m.outs||{}, b=bounds();
+  const all=m.mode==="diehard"?(KEYS.every(k=>o[k])?Math.max(...KEYS.map(k=>o[k])):null):(o.feliz||null);
+  const end=all||Math.min(nowDate().getTime(),b.end.getTime());
+  return {alive:!all,days:Math.max(0,(end-b.start.getTime())/DAY),outsN:Object.keys(o).length};
+}
+function teamCard(t){
+  const rows=Object.entries(t.members||{}).map(([uid,m])=>({uid,m,st:memberStat(m)}))
+    .sort((a,c)=>a.st.alive!==c.st.alive?(a.st.alive?-1:1):a.st.alive?(a.st.outsN-c.st.outsN):(c.st.days-a.st.days));
+  return `<div class="card"><div class="row"><b>${esc(t.name)}</b><span class="mut">kód: <b>${esc(t.id)}</b></span></div>
+  <div class="feed">${rows.map((r,i)=>`<div class="row"><div>${i+1}. <b>${esc(r.m.nick)}</b>${r.uid===user.uid?" (te)":""}<div class="mut">${r.st.days.toFixed(1).replace(".",",")} nap · ${r.st.alive?"még bent":"kiesett"}</div></div><div>${KEYS.map(k=>`<span class="tag ${r.m.outs?.[k]?"dead":"alive"}" title="${CH[k].name}">${CH[k].short.charAt(0)}${r.m.outs?.[k]?" ✕":" ✓"}</span>`).join(" ")}</div></div>`).join("")}</div>
+  <div class="row" style="margin-top:10px"><button class="sm pri" data-invite="${esc(t.id)}">📤 Meghívó</button><button class="sm" data-leave="${esc(t.id)}">Kilépés</button></div></div>`;
+}
+function pageTeams(b){
+  if(!user||!myPart){ b.innerHTML=`<div class="card"><p>A csapatokhoz előbb lépj be, és állítsd be a játékmódodat.</p><button class="pri" id="tl">Tovább</button></div>`; $("#tl").onclick=()=>{closePage();user?onboarding():loginModal()}; return }
+  b.innerHTML=`<div class="card"><h3>👥 Hívd meg a barátaidat</h3><p class="mut" style="margin:0 0 8px">Versenyezzetek, ki éli túl tovább! Hozz létre egy csapatot, és küldd el a meghívó linkjét.</p>
+   <label>Csapat neve</label><input id="tn" maxlength="30" placeholder="pl. Irodai túlélők"><button class="pri wide" id="tc">Csapat létrehozása</button><div class="err" id="terr"></div></div>
+   <div class="card"><label>Kaptál meghívó kódot? (6 karakter)</label><input id="tj" maxlength="6" style="text-transform:uppercase"><button class="wide" id="tjb">Csatlakozás kóddal</button></div>
+   <div class="card"><button class="wide" id="tinv">📤 Általános meghívó küldése (csapat nélkül)</button></div>
+   <h2>Csapataid</h2>${TEAMS===null?"<p class='mut'>Betöltés…</p>":(TEAMS.length?TEAMS.map(teamCard).join(""):"<p class='mut'>Még nem vagy egy csapatban sem.</p>")}
+   <p class="mut">Rangsor: aki még bent van, elöl áll; utána a kiesettek, minél tovább bírta, annál előrébb. (M = Mariah, W = Wham, F = Feliz)</p>`;
+  $("#tc").onclick=async()=>{ const n=$("#tn").value.trim(); if(n.length<2) return $("#terr").textContent="Adj nevet a csapatnak (min. 2 karakter)."; try{ const code=await createTeam(n); inviteSheet(code) }catch(e){ $("#terr").textContent=msg(e) } };
+  $("#tjb").onclick=async()=>{ const c=$("#tj").value.trim(); if(c.length!==6) return $("#terr").textContent="A kód 6 karakter."; try{ await joinTeam(c) }catch(e){ $("#terr").textContent=e.code?msg(e):e.message } };
+  $("#tinv").onclick=()=>inviteSheet();
+  b.querySelectorAll("[data-invite]").forEach(x=>x.onclick=()=>inviteSheet(x.dataset.invite));
+  b.querySelectorAll("[data-leave]").forEach(x=>x.onclick=async()=>{ const t=TEAMS.find(q=>q.id===x.dataset.leave); try{ await leaveTeam(t) }catch(e){ alert(msg(e)) } });
+}
+
+/* ---------- Mini játék: Fülvédő futam 2.0 ---------- */
+let G=null, LB={t:0,rows:null};
+const IC={
+ left:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>', right:'<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+ up:'<svg viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg>', down:'<svg viewBox="0 0 24 24"><path d="M5 9l7 7 7-7"/></svg>',
+ bolt:'<svg viewBox="0 0 24 24"><path d="M13 3L5 13h6l-1 8 8-10h-6z"/></svg>',
+ time:'<svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3v3l5 6-5 6v3M17 3v3l-5 6 5 6v3"/></svg>'
+};
 function stopGame(){ if(G){ cancelAnimationFrame(G.raf); removeEventListener("keydown",G.kd); removeEventListener("keyup",G.ku); G=null; } }
 function pageMini(b){
-  b.innerHTML=`<p class="mut" style="margin-top:6px">Te vagy a fülhallgatós hős a bal oldalon. Mariah jobbról küldi a hangjegyekkel díszített hanghullámokat: az <b>alacsonyakat ugord át</b> (⬆), a <b>magasak alatt bújj le</b> (⬇). Mozogni ◀ ▶ nyilakkal tudsz. Billentyűzeten: nyilak vagy WASD.</p>
+  const t=tierInfo().i;
+  b.innerHTML=`<div class="row" style="margin:6px 0"><span class="tag alive">${TIERS[t][1]} ${TIERS[t][0]}</span><label class="chk" style="margin:0"><input type="checkbox" id="prac"> Gyakorló mód</label></div>
+  <p class="mut" style="margin:4px 0 8px"><b>1 perc játék = 1 nap.</b> Éld túl a 24 napot! Alacsony hanghullám → ugorj (▲), magas → bújj le (▼). Egyre gyorsabb és nehezebb. 🎁 = meglepetés (hasznos és csapda is lehet).</p>
   <canvas id="gc" width="360" height="240"></canvas>
-  <div class="ctl"><button id="bl">◀</button><button id="br">▶</button><button id="bu">⬆</button><button id="bd">⬇</button></div>
-  <p class="mut" style="text-align:center">Ez csak játék – a kiesésed attól még nem számít. 😉 <span id="gbest"></span></p>`;
-  startGame($("#gc"));
+  <div class="pad"><button class="gbtn" id="bl" aria-label="balra">${IC.left}</button><button class="gbtn" id="br" aria-label="jobbra">${IC.right}</button><button class="gbtn" id="bu" aria-label="ugrás">${IC.up}</button><button class="gbtn" id="bd" aria-label="lebújás">${IC.down}</button></div>
+  <div class="pad2"><button class="gbtn ab" id="ba">${IC.bolt}<small>Kitörés (E)</small></button><button class="gbtn ab" id="bf">${IC.time}<small>Időlassítás (Q)</small></button></div>
+  <p class="mut" style="margin:0 0 6px"><span id="gbest"></span></p>
+  <details><summary>Jelvények és képességek</summary><p class="mut">${TIERS.map((x,i)=>`${x[1]} <b>${x[0]}</b>: ${["alap","dupla ugrás (levegőben még egyszer ▲)","kitörés ⚡: rövid sebezhetetlenség","időlassítás ⏱: megállítja a hanghullámokat 2 mp-re","induló pajzs"][i]}`).join("<br>")}<br>A magasabb szint nehezebb, gyorsabb játékot is jelent. Gyakorló módban minden képességet kipróbálhatsz (nincs ranglista).</p></details>
+  <h3>🏆 Ranglista</h3><div id="lb" class="arcade"><div class="mut">Betöltés…</div></div>`;
+  const cv=$("#gc"), go=()=>startGame(cv,t,$("#prac").checked);
+  $("#prac").onchange=go; go(); loadLb();
 }
-function startGame(cv){
+async function saveScore(d,T){
+  if(!user||!myPart) return;
+  try{ await setDoc(doc(db,"games",String(YEAR),"scores",user.uid),{nick:myPart.nick,days:d,tier:T,updatedAt:serverTimestamp()}); LB.t=0; loadLb(); }catch(e){}
+}
+async function loadLb(){
+  let el=$("#lb"); if(!el) return;
+  if(!user){ el.innerHTML=`<div class="mut">Lépj be a ranglistához.</div>`; return }
+  if(!LB.rows||Date.now()-LB.t>3*60e3){
+    try{ const sn=await getDocs(query(collection(db,"games",String(YEAR),"scores"),orderBy("days","desc"),limit(10))); LB.rows=sn.docs.map(d=>({id:d.id,...d.data()})); LB.t=Date.now(); }
+    catch(e){ el=$("#lb"); if(el) el.innerHTML=`<div class="mut">A ranglista most nem érhető el.</div>`; return }
+  }
+  el=$("#lb"); if(!el) return;
+  el.innerHTML=`<div class="ah">★ HIGH SCORES ★</div>`+(LB.rows.length?LB.rows.map((r,i)=>`<div class="ar${r.id===user.uid?" me":""}"><span>${String(i+1).padStart(2,"0")}.</span><span class="an">${esc(r.nick)}</span><span>${Number(r.days).toFixed(2).replace(".",",")} nap</span><span>${TIERS[r.tier??0][1]}</span></div>`).join(""):`<div style="text-align:center">Még nincs eredmény – légy te az első!</div>`);
+}
+function startGame(cv,tier,practice){
   stopGame();
-  const ctx=cv.getContext("2d"), W=360, H=240, GY=196;
-  const P={x:60,y:GY,vy:0,crouch:false}, keys={l:false,r:false,d:false};
-  const S={waves:[],notes:[],t:0,spawn:1.2,score:0,over:false,mouth:0,best:ls.get("best"+YEAR,0)};
-  const upd=()=>{const e=$("#gbest");if(e)e.textContent=S.best?`Rekord: ${Math.floor(S.best)} m`:""};
-  upd();
-  const jump=()=>{ if(S.over){reset();return} if(P.y>=GY-0.5&&!P.crouch) P.vy=-440; };
-  const reset=()=>{ S.waves=[];S.notes=[];S.score=0;S.over=false;S.spawn=1.0;P.x=60;P.y=GY;P.vy=0;P.crouch=false; };
+  const T=practice?4:tier, ctx=cv.getContext("2d"), W=360, H=240, GY=196;
+  const P={x:60,y:GY,vy:0,crouch:false,jumps:0,inv:0}, K={l:false,r:false,d:false};
+  const fresh=()=>({t:0,waves:[],notes:[],gifts:[],spawn:1.2,giftT:9+Math.random()*6,over:false,won:false,shield:T>=4?1:0,slow:0,fast:0,freeze:0,dashCd:0,freezeCd:0,mouth:0,msg:"",msgT:0,fin:0});
+  let S=fresh();
+  const day=()=>S.t/60, say=m=>{S.msg=m;S.msgT=2};
+  const best=()=>ls.get("bestd"+YEAR,0);
+  const bestEl=()=>{const e=$("#gbest");if(e)e.textContent=best()?`Saját rekord: ${best().toFixed(2).replace(".",",")} nap`:""};
+  bestEl();
+  $("#ba")?.classList.toggle("lockd",T<2); $("#bf")?.classList.toggle("lockd",T<3);
+  const reset=()=>{ S=fresh(); P.x=60;P.y=GY;P.vy=0;P.crouch=false;P.jumps=0;P.inv=0; };
+  const jump=()=>{ if(S.over){ if(S.fin>0.4) reset(); return }
+    if(P.y>=GY-0.5&&!P.crouch){P.vy=-440;P.jumps=1} else if(T>=1&&P.jumps<2&&P.y<GY-0.5){P.vy=-400;P.jumps=2} };
+  const dash=()=>{ if(S.over||T<2||S.dashCd>0) return; P.inv=0.5; S.dashCd=6; say("⚡ Kitörés!") };
+  const freeze=()=>{ if(S.over||T<3||S.freezeCd>0) return; S.freeze=2; S.freezeCd=14; say("🕶️ Megállítottad a hangokat!") };
+  const finish=won=>{ if(S.over) return; S.over=true; S.won=won; S.fin=0;
+    const d=Math.round(Math.min(24,day())*100)/100;
+    if(d>best()){ ls.set("bestd"+YEAR,d); bestEl(); if(!practice) saveScore(d,T); } };
+  const spawnWave=d=>{
+    const mk=(type,dx)=>S.waves.push(type==="low"?{x:W-40+dx,y:GY-26,w:30,h:26,type}:{x:W-40+dx,y:GY-58,w:30,h:26,type});
+    const r=Math.random(); mk(Math.random()<0.5?"low":"high",0);
+    if(d>6&&r<0.25) mk(Math.random()<0.5?"low":"high",95);
+    if(d>14&&r<0.12) mk("low",190);
+  };
+  const gift=()=>{ const r=Math.random();
+    if(r<0.3){S.shield=Math.min(2,S.shield+1);say("🛡️ Pajzs!")}
+    else if(r<0.55){S.slow=6;say("🐌 Lassítás 6 mp-re")}
+    else if(r<0.8){S.t+=30;say("🎅 Fél nap ajándékba!")}
+    else {S.fast=5;say("🔔 Csengőszó: gyorsulás!")} };
   G={};
   G.kd=e=>{ const k=e.key; if(["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(k)) e.preventDefault();
-    if(k==="ArrowLeft"||k==="a"||k==="A")keys.l=true; if(k==="ArrowRight"||k==="d"||k==="D")keys.r=true;
-    if(k==="ArrowDown"||k==="s"||k==="S")keys.d=true; if((k==="ArrowUp"||k==="w"||k==="W"||k===" ")&&!e.repeat)jump(); };
-  G.ku=e=>{ const k=e.key; if(k==="ArrowLeft"||k==="a"||k==="A")keys.l=false; if(k==="ArrowRight"||k==="d"||k==="D")keys.r=false; if(k==="ArrowDown"||k==="s"||k==="S")keys.d=false; };
+    if(k==="ArrowLeft"||k==="a"||k==="A")K.l=true; if(k==="ArrowRight"||k==="d"||k==="D")K.r=true;
+    if(k==="ArrowDown"||k==="s"||k==="S")K.d=true;
+    if((k==="ArrowUp"||k==="w"||k==="W"||k===" ")&&!e.repeat)jump();
+    if((k==="e"||k==="E")&&!e.repeat)dash(); if((k==="q"||k==="Q")&&!e.repeat)freeze(); };
+  G.ku=e=>{ const k=e.key; if(k==="ArrowLeft"||k==="a"||k==="A")K.l=false; if(k==="ArrowRight"||k==="d"||k==="D")K.r=false; if(k==="ArrowDown"||k==="s"||k==="S")K.d=false; };
   addEventListener("keydown",G.kd); addEventListener("keyup",G.ku);
-  const hold=(id,fn)=>{ const el=$(id); const on=e=>{e.preventDefault();fn(true)}, off=e=>{e.preventDefault();fn(false)};
+  const hold=(id,fn)=>{ const el=$(id); if(!el) return; const on=e=>{e.preventDefault();fn(true)}, off=e=>{e.preventDefault();fn(false)};
     el.addEventListener("pointerdown",on); el.addEventListener("pointerup",off); el.addEventListener("pointerleave",off); el.addEventListener("pointercancel",off); };
-  hold("#bl",v=>keys.l=v); hold("#br",v=>keys.r=v); hold("#bd",v=>keys.d=v);
-  $("#bu").addEventListener("pointerdown",e=>{e.preventDefault();jump()});
-  cv.addEventListener("pointerdown",()=>{ if(S.over) reset(); });
+  hold("#bl",v=>K.l=v); hold("#br",v=>K.r=v); hold("#bd",v=>K.d=v);
+  $("#bu")?.addEventListener("pointerdown",e=>{e.preventDefault();jump()});
+  $("#ba")?.addEventListener("pointerdown",e=>{e.preventDefault();dash()});
+  $("#bf")?.addEventListener("pointerdown",e=>{e.preventDefault();freeze()});
+  cv.addEventListener("pointerdown",()=>{ if(S.over&&S.fin>0.4) reset(); });
+  const hit=w=>{ const ph=P.crouch?24:44, px=P.x+3, pw=16, py=P.y-ph+3, pH=ph-6; return px<w.x+w.w-3&&px+pw>w.x+3&&py<w.y+w.h-3&&py+pH>w.y+3; };
   let last=performance.now();
-  const hit=(w)=>{ const ph=P.crouch?24:44, px=P.x+3, pw=16, py=P.y-ph+3, pH=ph-6; return px<w.x+w.w-3&&px+pw>w.x+3&&py<w.y+w.h-3&&py+pH>w.y+3; };
   function step(now){
     const dt=Math.min(0.04,(now-last)/1000); last=now;
     if(!S.over){
-      S.t+=dt; S.score+=dt*10;
-      P.crouch=keys.d&&P.y>=GY-0.5;
-      const sp=140; if(keys.l)P.x-=sp*dt; if(keys.r)P.x+=sp*dt; P.x=clamp(P.x,10,150);
-      P.vy+=1300*dt; P.y+=P.vy*dt; if(P.y>=GY){P.y=GY;P.vy=0}
-      const speed=Math.min(330,170+S.score*0.9);
-      S.spawn-=dt;
-      if(S.spawn<=0){
-        const low=Math.random()<0.5;
-        S.waves.push(low?{x:W-40,y:GY-26,w:30,h:26,type:"low"}:{x:W-40,y:GY-58,w:30,h:26,type:"high"});
-        S.spawn=Math.max(0.75,1.7-S.score/260)+Math.random()*0.7; S.mouth=0.35;
-      }
+      S.t+=dt; const d=day(); if(d>=24) finish(true);
+      P.crouch=K.d&&P.y>=GY-0.5;
+      if(K.l)P.x-=140*dt; if(K.r)P.x+=140*dt; P.x=clamp(P.x,10,150);
+      P.vy+=1300*dt; P.y+=P.vy*dt; if(P.y>=GY){P.y=GY;P.vy=0;P.jumps=0}
+      S.dashCd=Math.max(0,S.dashCd-dt); S.freezeCd=Math.max(0,S.freezeCd-dt); P.inv=Math.max(0,P.inv-dt);
+      S.slow=Math.max(0,S.slow-dt); S.fast=Math.max(0,S.fast-dt); S.freeze=Math.max(0,S.freeze-dt); S.msgT=Math.max(0,S.msgT-dt);
+      let speed=(150+d*9)*(1+T*0.04); if(S.slow>0)speed*=0.6; if(S.fast>0)speed*=1.35; if(S.freeze>0)speed=0;
+      if(S.freeze<=0) S.spawn-=dt;
+      if(S.spawn<=0){ spawnWave(d); S.spawn=Math.max(0.5,1.7-d*0.045-T*0.03)+Math.random()*0.6; S.mouth=0.35; }
       S.mouth=Math.max(0,S.mouth-dt);
+      S.giftT-=dt; if(S.giftT<=0){ S.gifts.push({x:W-30,y:Math.random()<0.5?GY-22:GY-72,w:20,h:20}); S.giftT=10+Math.random()*10; }
       S.waves.forEach(w=>w.x-=speed*dt); S.waves=S.waves.filter(w=>w.x>-50);
+      S.gifts.forEach(g=>g.x-=speed*dt); S.gifts=S.gifts.filter(g=>g.x>-30);
+      const ph=P.crouch?24:44; S.gifts=S.gifts.filter(g=>{ if(P.x+3<g.x+g.w&&P.x+19>g.x&&P.y-ph<g.y+g.h&&P.y>g.y){ gift(); return false } return true; });
       if(Math.random()<dt*2) S.notes.push({x:W-30,y:60+Math.random()*60,v:20+Math.random()*30});
       S.notes.forEach(n=>{n.y-=n.v*dt;n.x+=6*dt}); S.notes=S.notes.filter(n=>n.y>10);
-      if(S.waves.some(hit)){ S.over=true; if(S.score>S.best){S.best=S.score;ls.set("best"+YEAR,S.best);upd()} }
-    }
+      if(P.inv<=0){ const hw=S.waves.find(hit); if(hw){ if(S.shield>0){ S.shield--; S.waves=S.waves.filter(w=>w!==hw); say("🛡️ A pajzs megvédett!"); } else finish(false); } }
+    } else S.fin+=dt;
     // rajz
     const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,"#cfe6f7"); sky.addColorStop(1,"#f4faff"); ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
     ctx.fillStyle="#fff"; ctx.fillRect(0,GY,W,H-GY); ctx.fillStyle="#bcd9ee"; ctx.fillRect(0,GY,W,2);
@@ -998,22 +1275,31 @@ function startGame(cv){
     S.notes.forEach(n=>{ctx.fillStyle="rgba(215,38,61,.55)";ctx.font="14px sans-serif";ctx.fillText("♪",n.x,n.y)});
     drawMariah(ctx,318,GY,S.mouth>0);
     S.waves.forEach(w=>drawWave(ctx,w));
-    drawHero(ctx,P);
-    ctx.fillStyle="#16324f"; ctx.font="700 14px system-ui,sans-serif"; ctx.textAlign="left"; ctx.fillText(`${Math.floor(S.score)} m`,10,20);
-    if(S.over){ ctx.fillStyle="rgba(22,50,79,.72)"; ctx.fillRect(15,70,330,100); ctx.fillStyle="#fff"; ctx.textAlign="center";
-      ctx.font="700 18px system-ui,sans-serif"; ctx.fillText("Felismerted a dalt! 💀",W/2,102);
-      ctx.font="14px system-ui,sans-serif"; ctx.fillText(`${Math.floor(S.score)} métert bírtál`,W/2,126); ctx.fillText("Koppints vagy nyomd meg a ⬆ gombot",W/2,150); ctx.textAlign="left"; }
+    S.gifts.forEach(g=>{ ctx.font="20px sans-serif"; ctx.textAlign="left"; ctx.fillText("🎁",g.x,g.y+18); });
+    if(P.inv>0) ctx.globalAlpha=.5;
+    drawHero(ctx,P); ctx.globalAlpha=1;
+    if(S.shield>0){ ctx.strokeStyle="rgba(44,111,168,.8)"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(P.x+11,P.y-(P.crouch?12:22),26,0,6.3); ctx.stroke(); }
+    if(S.freeze>0){ ctx.fillStyle="rgba(120,180,255,.22)"; ctx.fillRect(0,0,W,H); }
+    const dd=Math.min(24,day());
+    ctx.fillStyle="#16324f"; ctx.font="700 13px system-ui,sans-serif"; ctx.textAlign="left"; ctx.fillText(`Nap ${dd.toFixed(1).replace(".",",")} / 24`,10,18);
+    ctx.fillStyle="rgba(22,50,79,.15)"; ctx.fillRect(10,24,150,5); ctx.fillStyle="#d7263d"; ctx.fillRect(10,24,150*dd/24,5);
+    ctx.font="12px system-ui,sans-serif"; ctx.textAlign="right";
+    ctx.fillText(`${S.shield>0?"🛡️×"+S.shield+"  ":""}${T>=2?(S.dashCd>0?"⚡"+Math.ceil(S.dashCd):"⚡ kész"):""}  ${T>=3?(S.freezeCd>0?"⏱"+Math.ceil(S.freezeCd):"⏱ kész"):""}`,W-10,18); ctx.textAlign="left";
+    if(S.msgT>0){ ctx.fillStyle="rgba(22,50,79,.85)"; ctx.font="700 14px system-ui,sans-serif"; ctx.textAlign="center"; ctx.fillText(S.msg,W/2,60); ctx.textAlign="left"; }
+    if(S.over){ ctx.fillStyle="rgba(22,50,79,.78)"; ctx.fillRect(15,70,330,100); ctx.fillStyle="#fff"; ctx.textAlign="center";
+      ctx.font="700 18px system-ui,sans-serif"; ctx.fillText(S.won?"TÚLÉLTED KARÁCSONYIG! 🎄🎉":"Felismerted a dalt! 💀",W/2,102);
+      ctx.font="14px system-ui,sans-serif"; ctx.fillText(`${Math.min(24,day()).toFixed(2).replace(".",",")} napot bírtál${practice?" (gyakorló)":""}`,W/2,126); ctx.fillText("Koppints vagy nyomd meg a ▲ gombot az újrához",W/2,150); ctx.textAlign="left"; }
     G.raf=requestAnimationFrame(step);
   }
   G.raf=requestAnimationFrame(step);
 }
 function drawHero(ctx,P){
   const h=P.crouch?24:44, x=P.x, y=P.y;
-  ctx.fillStyle="#2c6fa8"; ctx.fillRect(x+2,y-h+14,18,h-14);               // test
-  ctx.fillStyle="#f1cfb3"; ctx.beginPath(); ctx.arc(x+11,y-h+8,8,0,6.3); ctx.fill(); // fej
-  ctx.strokeStyle="#16324f"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x+11,y-h+8,10,Math.PI,0); ctx.stroke(); // fejpánt
-  ctx.fillStyle="#d7263d"; ctx.fillRect(x-1,y-h+4,5,9); ctx.fillRect(x+18,y-h+4,5,9);              // fülhallgató
-  ctx.fillStyle="#16324f"; ctx.fillRect(x+4,y-6,5,6); ctx.fillRect(x+13,y-6,5,6);                   // láb
+  ctx.fillStyle="#2c6fa8"; ctx.fillRect(x+2,y-h+14,18,h-14);
+  ctx.fillStyle="#f1cfb3"; ctx.beginPath(); ctx.arc(x+11,y-h+8,8,0,6.3); ctx.fill();
+  ctx.strokeStyle="#16324f"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(x+11,y-h+8,10,Math.PI,0); ctx.stroke();
+  ctx.fillStyle="#d7263d"; ctx.fillRect(x-1,y-h+4,5,9); ctx.fillRect(x+18,y-h+4,5,9);
+  ctx.fillStyle="#16324f"; ctx.fillRect(x+4,y-6,5,6); ctx.fillRect(x+13,y-6,5,6);
 }
 function drawMariah(ctx,x,GY,open){
   ctx.fillStyle="#d7263d"; ctx.beginPath(); ctx.moveTo(x,GY-70); ctx.lineTo(x-22,GY); ctx.lineTo(x+22,GY); ctx.closePath(); ctx.fill();
@@ -1028,9 +1314,9 @@ function drawMariah(ctx,x,GY,open){
 }
 function drawWave(ctx,w){
   const cy=w.y+w.h/2;
-  ctx.strokeStyle="#d7263d"; ctx.lineWidth=3; ctx.lineCap="round";
-  for(let i=0;i<3;i++){ ctx.globalAlpha=1-i*0.25; ctx.beginPath(); ctx.arc(w.x+w.w-6+i*0,cy,w.h/2-2+i*5,Math.PI*0.62,Math.PI*1.38); ctx.stroke(); ctx.translate(-6,0); }
-  ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha=1;
+  ctx.save(); ctx.strokeStyle="#d7263d"; ctx.lineWidth=3; ctx.lineCap="round";
+  for(let i=0;i<3;i++){ ctx.globalAlpha=1-i*0.25; ctx.beginPath(); ctx.arc(w.x+w.w-6-i*6,cy,w.h/2-2+i*5,Math.PI*0.62,Math.PI*1.38); ctx.stroke(); }
+  ctx.restore();
   ctx.fillStyle="#16324f"; ctx.font="bold 15px sans-serif"; ctx.textAlign="center"; ctx.fillText(w.type==="low"?"♫":"♪",w.x+w.w/2-2,cy+5); ctx.textAlign="left";
 }
 
@@ -1038,7 +1324,7 @@ function drawWave(ctx,w){
 render();
 setInterval(()=>{ if(route==="home") render(); },3600e3);
 if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
-  addEventListener("load",()=>navigator.serviceWorker.register("sw_v4.js").catch(()=>{}));
+  addEventListener("load",()=>navigator.serviceWorker.register("sw_v5.js").catch(()=>{}));
 }
 </script>
 </body>

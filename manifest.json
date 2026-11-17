@@ -3,7 +3,7 @@
   "short_name": "Túlélőközpont",
   "description": "Mariahrmageddon, Whamageddon, Feliznavidageddon – kiesésbejelentő és statisztika",
   "lang": "hu",
-  "start_url": "./karacsonyi_tulelokozpont_v4.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
