@@ -1,10 +1,10 @@
-/* Karácsonyi Túlélőközpont – service worker v6
+/* Karácsonyi Túlélőközpont – service worker v7
    Stratégia: az oldal (navigáció) először hálózatról, hiba esetén gyorsítótárból;
    a statikus fájlok (ikonok, Firebase/Leaflet kódok) gyorsítótárból, háttérben frissítve.
    Firestore / Auth hívásokat és a térképcsempéket NEM nyúljuk. */
-const CACHE = 'tk-v6.1';
+const CACHE = 'tk-v7';
 const PAGE = './index.html';
-const SHELL = ['./', PAGE, './manifest_v6.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const SHELL = ['./', PAGE, './og/main.png', './manifest_v7.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -29,7 +29,7 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
-        .then(res => { const cp = res.clone(); caches.open(CACHE).then(c => c.put(PAGE, cp)); return res; })
+        .then(res => { const p = u.pathname; if (res.ok && (p.endsWith('/') || p.endsWith('/index.html'))) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(PAGE, cp)); } return res; })
         .catch(() => caches.match(PAGE))
     );
     return;

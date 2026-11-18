@@ -6,7 +6,11 @@
 <title>Karácsonyi Túlélőközpont</title>
 <meta name="theme-color" content="#dcecf8">
 <meta name="description" content="Mariahrmageddon, Whamageddon, Feliznavidageddon – kiesésbejelentő és statisztika a Kecskeméti Fiatalok Társaságától.">
-<link rel="manifest" href="manifest_v6.webmanifest">
+<link rel="manifest" href="manifest_v7.webmanifest">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Karácsonyi Túlélőközpont">
+<meta property="og:title" content="Karácsonyi Túlélőközpont"><meta property="og:description" content="Mariahrmageddon, Whamageddon, Feliznavidageddon – három dal, egyetlen cél: túlélni. Kecskeméti Fiatalok Társasága.">
+<meta property="og:image" content="https://bela23ah.github.io/mariahrmageddon/og/main.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:url" content="https://bela23ah.github.io/mariahrmageddon/"><meta name="twitter:card" content="summary_large_image">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -165,17 +169,46 @@ details p{margin:0 0 12px}
 .verdict.win{background:linear-gradient(90deg,#e3f6ec,#e6f2fb);color:var(--grn);text-align:center;font-size:1.05rem}
 .verdict.storm{background:linear-gradient(120deg,#fff1e8,#e3f0fb,#ffe3d6);color:#c2410c;text-align:center;font-size:1.05rem;animation:storm 2.5s ease-in-out infinite alternate}
 @keyframes storm{from{box-shadow:0 0 0 rgba(234,88,12,0)}to{box-shadow:0 0 18px rgba(234,88,12,.45)}}
+
+.i{width:1.1em;height:1.1em;vertical-align:-.17em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;flex:none}
+.i[data-f] path{fill:currentColor}
+.i.g{color:var(--grn)}.i.r{color:var(--red)}
+.tile .ico .i{width:1em;height:1em;color:var(--accent,var(--blue))}
+header{align-items:flex-start}
+.brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.brand b{display:flex;align-items:center;gap:6px;font-size:.98rem}
+#auth{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+button.adm{background:#16324f;border-color:#16324f;color:#fff}
+.medals{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.medal{width:66px;overflow-wrap:anywhere;text-align:center;background:none;border:0;padding:0;font-size:.64rem;color:var(--mut);line-height:1.2}
+.medal .mc{width:44px;height:44px;border-radius:50%;margin:0 auto 3px;display:flex;align-items:center;justify-content:center;background:#e2e8f0;color:#94a3b8;border:2px solid #cbd5e1}
+.medal.on .mc{background:var(--mcol);color:#fff;border-color:var(--mcol)}
+.medal .i{width:22px;height:22px}
+.prog{height:10px;border-radius:6px;background:#e2eaf2;overflow:hidden;margin:8px 0}.prog i{display:block;height:100%;background:var(--grn)}
+.advent{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin:8px 0}
+.advent span{aspect-ratio:1;border-radius:6px;background:#e2eaf2;font-size:.64rem;display:flex;align-items:center;justify-content:center;color:var(--mut)}
+.advent span.p{background:#bfe3d0;color:#1c6b49}.advent span.t{background:var(--red);color:#fff}.advent span.c{outline:2px solid var(--blue)}
+.illus svg{width:100%;height:auto;display:block;border-radius:14px;border:1px solid var(--line)}
+#gc{touch-action:none;user-select:none;-webkit-user-select:none}
+.empty{text-align:center;color:var(--mut);padding:14px}.empty .i{width:48px;height:48px;color:var(--ice);display:block;margin:0 auto 6px}
+.pinx .i{width:30px;height:30px;stroke:#d7263d;fill:#fff;stroke-width:2}
+.confetti{position:absolute;left:0;right:0;top:0;height:0;pointer-events:none;overflow:visible}
+.confetti i{position:absolute;top:-10px;width:8px;height:14px;border-radius:2px;animation:cf 3.2s linear infinite}
+@keyframes cf{to{transform:translateY(420px) rotate(540deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.confetti{display:none}}
+.legal{text-align:center;font-size:.8rem;color:var(--mut);margin:18px 0 0}.legal a{color:var(--blue);margin:0 6px}
 </style>
 </head>
 <body>
 <div id="snow"></div>
 <header>
-  <b>❄️ Túlélőközpont</b>
+  <div class="brand"><b><span id="brandico"></span>Karácsonyi Túlélőközpont</b><button class="sm pri hide" id="instbtn"></button></div>
   <div id="auth"></div>
 </header>
 <main>
   <div id="setup" class="card hide"></div>
   <div id="view"></div>
+  <div class="legal"><a href="adatkezeles.html">Adatkezelés</a>·<a href="aszf.html">ÁSZF</a>·<a href="impresszum.html">Impresszum</a></div>
 </main>
 <nav id="nav">
   <button data-r="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Kezdőlap</button>
@@ -193,6 +226,160 @@ import {getAuth,onAuthStateChanged,signInWithPopup,signInWithRedirect,GoogleAuth
   createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,deleteUser} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,deleteDoc,deleteField,query,where,orderBy,limit,onSnapshot,
   runTransaction,serverTimestamp,Timestamp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ===== Ikonkészlet + illusztrációk (az app és az OG-kép generátor ugyanezt használja) ===== */
+const ICONS={
+ snow:"M12 2v20M4.2 7l15.6 10M4.2 17L19.8 7M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5",
+ users:"M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.3a3.5 3.5 0 010 6.4M18 14.3c2.1.7 3.5 2.6 3.5 5.7",
+ user:"M12 12a4 4 0 100-8 4 4 0 000 8zM4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5",
+ tree:"M12 3l-6 8h3.5L5 17h14l-4.5-6H18zM12 17v4",
+ flame:"M12 22c4 0 7-2.8 7-7 0-3-2-5-3-7-1 2-2 3-3 3 0-3-1-6-4-8 0 4-4 6-4 11 0 4.2 3 8 7 8z",
+ skull:"M12 3a8 8 0 00-5 14.2V20h2v-2h2v2h2v-2h2v2h2v-2.8A8 8 0 0012 3zM9 12.5h.01M15 12.5h.01",
+ shield:"M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z",
+ send:"M12 16V4M7 9l5-5 5 5M5 20h14",
+ bolt:"M13 3L5 13h6l-1 8 8-10h-6z",
+ mail:"M3 6h18v12H3zM3 7l9 7 9-7",
+ lock:"M6 11h12v9H6zM8 11V8a4 4 0 018 0v3",
+ phones:"M4 15v-3a8 8 0 0116 0v3M4 15h3v5H4zM17 15h3v5h-3z",
+ phone:"M8 2h8a1 1 0 011 1v18a1 1 0 01-1 1H8a1 1 0 01-1-1V3a1 1 0 011-1zM11 18.5h2",
+ fb:"M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.5a.5.5 0 01.5-.5z",
+ timer:"M12 21a8 8 0 100-16 8 8 0 000 16zM12 9v4l2.5 2M9 2h6",
+ globe:"M12 21a9 9 0 100-18 9 9 0 000 18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18",
+ party:"M4 20l4-12 8 8zM14 4v2M19 8h2M17 11l2-1M10 3l1 2",
+ check:"M5 12.5l4.5 4.5L19 7.5",
+ checkc:"M12 21a9 9 0 100-18 9 9 0 000 18zM8 12.5l3 3 5-6",
+ dot:"M12 17a5 5 0 100-10 5 5 0 000 10z",
+ town:"M3 21V10l5-3 5 3v11M13 21V6l4-3 4 3v15M6 13h2M6 17h2M16 10h2M16 14h2",
+ alert:"M12 3l10 18H2zM12 10v5M12 18h.01",
+ siren:"M7 20v-6a5 5 0 0110 0v6zM5 20h14M12 3v2M4.5 6l1.5 1.5M19.5 6L18 7.5",
+ chart:"M4 20V10M10 20V4M16 20v-7M22 20H2",
+ pin:"M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11zM12 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
+ clip:"M8 4h8v3H8zM6 5h2M16 5h2M6 5v16h12V5M9 12h6M9 16h6",
+ image:"M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M8.5 9.5h.01",
+ gift:"M4 10h16v10H4zM3 7h18v3H3zM12 7v13M12 7c-3 0-5-1-4.5-3S11 4 12 7zM12 7c3 0 5-1 4.5-3S13 4 12 7z",
+ shades:"M2 9h20M3.5 9l1.2 6.5h4.6L10.5 11h3l1.2 4.5h4.6L20.5 9",
+ tent:"M12 21a9 9 0 100-18 9 9 0 000 18zM15.5 8.5l-2 5-5 2 2-5z",
+ medal:"M8 2l4 7 4-7M12 22a6 6 0 100-12 6 6 0 000 12zM12 13.5v3",
+ crown:"M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z",
+ star:"M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.5 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z",
+ note:"M9 18V5l11-2v13M9 18a3 3 0 11-3-3 3 3 0 013 3zM20 16a3 3 0 11-3-3 3 3 0 013 3z",
+ heart:"M12 20s-8-5-8-11a4.5 4.5 0 018-2.5A4.5 4.5 0 0120 9c0 6-8 11-8 11z",
+ heartb:"M12 20s-8-5-8-11a4.5 4.5 0 018-2.5A4.5 4.5 0 0120 9c0 6-8 11-8 11zM12 6.5l-2 4 3 2-1 3.5",
+ santa:"M4 18c2-9 8-14 14-14M18 4a2 2 0 100 4 2 2 0 000-4zM3 18h18v3H3z",
+ guitar:"M14 10l6-6M17 3l4 4M11 9a4 4 0 00-5 1.5C4.5 12.5 5 14 3.5 16 2 18 3 21 5 21s4-1 5-2.5 3-2 2.5-4.5A4 4 0 0011 9z",
+ gamepad:"M6 8h12a4 4 0 014 4v2a3 3 0 01-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 012 14v-2a4 4 0 014-4zM7 11v3M5.5 12.5h3M16 12h.01M18 13.5h.01",
+ tools:"M14.5 6.5a4 4 0 00-5 5L3 18l3 3 6.5-6.5a4 4 0 005-5l-2.5 2.5-2.5-.5-.5-2.5z",
+ ban:"M12 21a9 9 0 100-18 9 9 0 000 18zM5.6 5.6l12.8 12.8",
+ refresh:"M20 11a8 8 0 00-14-4L4 9M4 4v5h5M4 13a8 8 0 0014 4l2-2M20 20v-5h-5",
+ cal:"M4 5h16v15H4zM4 10h16M8 3v4M16 3v4",
+ down:"M12 4v12M7 11l5 5 5-5M5 20h14",
+ apple:"M12 7c-3-2-8 0-8 6 0 4 3 8 6 8 1 0 1.5-.5 2-.5s1 .5 2 .5c3 0 6-4 6-8 0-6-5-8-8-6zM12 7c0-2 1-3 3-4",
+ arrow:"M5 12h14M13 6l6 6-6 6",
+ x:"M6 6l12 12M18 6L6 18",
+ bell:"M6 16v-5a6 6 0 0112 0v5l2 2H4zM10 21h4",
+ trophy:"M7 4h10v5a5 5 0 01-10 0zM7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3M12 14v4M8 21h8M10 18h4",
+ info:"M12 21a9 9 0 100-18 9 9 0 000 18zM12 11v6M12 7.5h.01",
+ plus:"M12 5v14M5 12h14",
+ eye:"M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z",
+ wave:"M2 12c2-6 4-6 6 0s4 6 6 0 4-6 6 0",
+ install:"M12 3v12M7 10l5 5 5-5M5 21h14",
+ snowman:"M12 8a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM12 20a6 6 0 100-12 6 6 0 000 12zM11 4h.01M13 4h.01M12 13h.01M12 16h.01"
+};
+const FILLED=new Set(["dot","star"]);
+const ico=(n,cls)=>{ const d=ICONS[n]||ICONS.snow; return `<svg class="i${cls?" "+cls:""}" viewBox="0 0 24 24" aria-hidden="true"${FILLED.has(n)?' data-f="1"':''}><path d="${d}"/></svg>`; };
+/* emoji -> [ikon, opcionális osztály] */
+const EMOJI={
+ "🔥❄":["flame"],"❄":["snow"],"👥":["users"],"👤":["user"],"🎄":["tree"],"🎅":["tree"],"🤶":["santa"],"🔥":["flame"],"😈":["flame"],"💀":["skull"],"🛡":["shield"],
+ "📤":["send"],"⚡":["bolt"],"📧":["mail"],"🔒":["lock"],"🎧":["phones"],"📲":["phone"],"📱":["phone"],"📘":["fb"],"⏱":["timer"],"🐌":["timer"],
+ "🌍":["globe"],"🎉":["party"],"✅":["checkc"],"✓":["check"],"🟢":["dot","g"],"🔴":["dot","r"],"🏘":["town"],"🚨":["siren"],"⚠":["alert"],"📊":["chart"],
+ "📍":["pin"],"📋":["clip"],"🖼":["image"],"🎁":["gift"],"🕶":["shades"],"🏕":["tent"],"🎖":["medal"],"👑":["crown"],"★":["star"],"♪":["note"],"♫":["note"],"🎶":["note"],
+ "💔":["heartb"],"🖤":["heart"],"🙏":["heart"],"🎸":["guitar"],"🎮":["gamepad"],"🛠":["tools"],"🚫":["ban"],"🔄":["refresh"],"📅":["cal"],"📥":["down"],
+ "🍎":["apple"],"👉":["arrow"],"✕":["x"],"🔔":["bell"],"🏆":["trophy"],"ℹ":["info"]
+};
+const EMRE_SRC=Object.keys(EMOJI).sort((a,b)=>b.length-a.length).join("|");
+
+/* ===== Illusztrációk (1200x630) ===== */
+const SNOWPTS=[[60,80],[180,40],[310,120],[470,60],[600,30],[760,90],[900,40],[1040,110],[1130,60],[120,300],[540,260],[980,330],[1150,420],[40,470],[700,500],[260,520]];
+function gIco(n,x,y,s,col,sw){ const f=FILLED.has(n); return `<g transform="translate(${x},${y}) scale(${s/24})" fill="${f?col:"none"}" stroke="${f?"none":col}" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round"><path d="${ICONS[n]||ICONS.snow}"/></g>`; }
+function scene(o){
+  const dark=!!o.dark, tx=dark?"#fff":"#16324f", mu=dark?"#cbd5e1":"#4a6a88", id="bg"+o.id;
+  const a=o.a||(dark?"#1f1218":"#cfe6f7"), b=o.b||(dark?"#121826":"#f4faff");
+  const lines=(o.title||[]).map((t,i)=>`<text x="70" y="${o.ty+i*76}" font-size="${o.fs||68}" font-weight="800" fill="${tx}">${t}</text>`).join("");
+  const sy=o.ty+(o.title.length-1)*76+58;
+  const sub=(o.sub||[]).map((t,i)=>`<text x="70" y="${sy+i*42}" font-size="32" fill="${mu}">${t}</text>`).join("");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" font-family="system-ui,'Segoe UI',Roboto,'DejaVu Sans',Arial,sans-serif"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+<rect width="1200" height="630" fill="url(#${id})"/>${SNOWPTS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${2+i%4}" fill="${dark?"#fff":"#8cc3ea"}" opacity="${dark?.25:.5}"/>`).join("")}
+<rect x="0" y="560" width="1200" height="70" fill="${dark?"#0b1020":"#16324f"}"/>${gIco("snow",70,578,34,"#fff",2)}<text x="116" y="604" font-size="28" font-weight="700" fill="#fff">Karácsonyi Túlélőközpont</text><text x="1130" y="602" font-size="22" fill="#cbd5e1" text-anchor="end">Kecskeméti Fiatalok Társasága · facebook.com/Kaefte</text>
+${lines}${sub}<g transform="translate(650,50)">${o.body}</g></svg>`;
+}
+const circ=(x,y,r,fill,icon,col)=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"/>${gIco(icon,x-r*.55,y-r*.55,r*1.1,col||"#fff",2)}`;
+const FRONTS=[["mariah","#d7263d","santa"],["wham","#2c6fa8","heartb"],["feliz","#e0932b","guitar"]];
+const IL={
+main:()=>scene({id:"main",ty:200,title:["Karácsonyi","Túlélőközpont"],sub:["Mariahrmageddon · Whamageddon","Feliznavidageddon","Három dal. Egyetlen cél: túlélni."],body:
+  `<circle cx="250" cy="220" r="190" fill="#fff" opacity=".75"/>${gIco("tree",110,80,280,"#2a9d6f",1.4)}${gIco("snow",350,70,70,"#8cc3ea",1.6)}${gIco("snow",60,280,50,"#8cc3ea",1.6)}`+FRONTS.map((f,i)=>circ(90+i*160,440,48,f[1],f[2])).join("")}),
+team:()=>scene({id:"team",ty:210,title:["Hívlak a","csapatomba!"],sub:["Ki bírja tovább karácsonyig?","Csatlakozz, és versenyezzünk!"],body:
+  `<circle cx="250" cy="240" r="200" fill="#fff" opacity=".75"/>${gIco("trophy",190,60,120,"#e0932b",1.6)}${gIco("users",70,200,360,"#2c6fa8",1.3)}<path d="M80 440h340" stroke="#8cc3ea" stroke-width="6" stroke-dasharray="2 14" stroke-linecap="round"/>`}),
+towns:()=>scene({id:"towns",ty:210,title:["Települések","versenye"],sub:["Melyik város bírja tovább?","Add meg a lakóhelyed!"],body:
+  `<rect x="20" y="30" width="470" height="440" rx="28" fill="#fff" opacity=".8"/>`+[["Kecskemét",380],["Szeged",320],["Debrecen",270],["Pécs",210]].map(([n,w],i)=>`${gIco("town",44,64+i*100,44,"#2c6fa8",2)}<text x="100" y="${88+i*100}" font-size="26" font-weight="700" fill="#16324f">${n}</text><rect x="100" y="${100+i*100}" width="${w}" height="22" rx="11" fill="#dcecf8"/><rect x="100" y="${100+i*100}" width="${w*0.7}" height="22" rx="11" fill="#2a9d6f"/>`).join("")}),
+collective:()=>scene({id:"coll",ty:190,title:["Össznépi","harc"],sub:["Ha a regisztráltak 10%-a","túléli, kollektíve legyőztük","a Mariahrmageddont!"],body:
+  `<circle cx="250" cy="150" r="110" fill="#fff" opacity=".8"/>${gIco("globe",170,70,160,"#2c6fa8",1.6)}<rect x="20" y="330" width="460" height="44" rx="22" fill="#fde2e5"/><rect x="20" y="330" width="170" height="44" rx="22" fill="#2a9d6f"/><rect x="62" y="316" width="5" height="72" fill="#16324f"/><text x="72" y="312" font-size="24" font-weight="800" fill="#16324f">10% cél</text><text x="20" y="430" font-size="26" fill="#16324f" font-weight="700">Minél többen indulunk,</text><text x="20" y="464" font-size="26" fill="#16324f" font-weight="700">annál jobb az eredmény.</text>`}),
+elim:(k)=>{ const F={mariah:["Mariahrmageddon","#d7263d","All I Want for Christmas Is You"],wham:["Whamageddon","#2c6fa8","Last Christmas"],feliz:["Feliznavidageddon","#e0932b","Feliz Navidad"]}[k||"mariah"];
+  return scene({id:"elim"+(k||""),dark:true,ty:200,title:["Kiestem!"],fs:96,sub:["Elesett a harcban:",F[0],"„"+F[2]+"”"],body:
+  `<circle cx="250" cy="220" r="190" fill="${F[1]}" opacity=".22"/>${gIco("skull",110,80,280,"#fca5a5",1.5)}${gIco("note",190,380,120,F[1],1.8)}<path d="M180 470l140-110" stroke="#fff" stroke-width="8" stroke-linecap="round"/>`}); },
+modes:()=>scene({id:"modes",ty:190,title:["Két játékmód"],fs:60,sub:["Hagyományos: egymás után","Die Hard: mindhárom egyszerre"],body:
+  `<rect x="10" y="20" width="490" height="210" rx="26" fill="#fff" opacity=".8"/><text x="30" y="62" font-size="24" font-weight="800" fill="#16324f">Hagyományos (vígaszági)</text>`+FRONTS.map((f,i)=>circ(90+i*160,150,42,f[1],f[2])).join("")+`<path d="M142 150h50m-10-9l10 9-10 9M302 150h50m-10-9l10 9-10 9" stroke="#16324f" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="10" y="250" width="490" height="230" rx="26" fill="#fff" opacity=".8"/><text x="30" y="292" font-size="24" font-weight="800" fill="#d7263d">Die Hard</text>`+FRONTS.map((f,i)=>circ(90+i*160,390,42,f[1],f[2])).join("")+gIco("flame",215,300,50,"#d7263d",2)}),
+game:()=>scene({id:"game",ty:200,title:["Fülvédő futam"],fs:70,sub:["1 perc játék = 1 nap","Ugorj, bújj le, kerüld a hanghullámokat!"],body:
+  `<rect x="0" y="40" width="500" height="400" rx="28" fill="#eaf4fc"/><rect x="0" y="350" width="500" height="90" fill="#fff"/><rect x="0" y="350" width="500" height="4" fill="#bcd9ee"/><circle cx="90" cy="290" r="26" fill="#f1cfb3"/><path d="M64 290a26 26 0 0152 0" stroke="#16324f" stroke-width="8" fill="none"/><rect x="72" y="316" width="36" height="34" fill="#2c6fa8" rx="6"/>
+   <path d="M230 330c0-30 0-40 20-40M262 330c0-50 0-70 24-70" stroke="#d7263d" stroke-width="10" fill="none" stroke-linecap="round" opacity=".8"/>${gIco("note",300,200,60,"#d7263d",2)}${circ(430,300,52,"#d7263d","santa")}${gIco("gift",160,190,50,"#e0932b",2)}`}),
+badges:()=>scene({id:"badges",ty:190,title:["Jelvények és","képességek"],sub:["Minden ~5 túlélt nap új jelvény,","és új képesség a mini játékban."],body:
+  `<rect x="0" y="40" width="500" height="400" rx="28" fill="#fff" opacity=".8"/>`+[["tent","Kiscserkész"],["shield","Profi"],["medal","Rambo"],["shades","Neo"],["crown","Legenda"]].map(([n,t],i)=>{const x=(i<3?90+i*160:170+(i-3)*160), y=(i<3?150:330); return circ(x,y,50,["#8cc3ea","#2c6fa8","#2a9d6f","#16324f","#e0932b"][i],n)+`<text x="${x}" y="${y+78}" font-size="20" font-weight="700" fill="#16324f" text-anchor="middle">${t}</text>`}).join("")}),
+danger:()=>scene({id:"danger",ty:200,title:["Kerülendő","helyek"],sub:["Jelöld meg, hol szól a dal,","és mennyire hangos!"],body:
+  `<rect x="0" y="30" width="500" height="430" rx="28" fill="#eaf4fc"/><circle cx="250" cy="240" r="170" fill="#d97706" opacity=".12" stroke="#d97706" stroke-width="4" stroke-dasharray="14 10"/><circle cx="250" cy="240" r="100" fill="#d7263d" opacity=".18" stroke="#d7263d" stroke-width="4"/>${gIco("pin",190,150,120,"#d7263d",2)}<text x="250" y="440" font-size="24" font-weight="700" fill="#16324f" text-anchor="middle">kb. 60–80 dB · hallótávolság</text>`}),
+howto:()=>scene({id:"howto",ty:190,title:["Így megy"],fs:70,sub:["Három lépés, és kész."],body:
+  `<rect x="0" y="30" width="500" height="440" rx="28" fill="#fff" opacity=".8"/>`+[["phones","Kerüld a dalokat","#2c6fa8"],["skull","Kiestél? Koppints","#d7263d"],["fb","Oszd meg a bukást","#1877f2"]].map(([n,t,c],i)=>circ(80,100+i*140,46,c,n)+`<text x="150" y="${110+i*140}" font-size="28" font-weight="700" fill="#16324f">${i+1}. ${t}</text>`).join("")})
+};
+const ILLUS_LIST=[
+ ["main","A főlink","Főkép – a Karácsonyi Túlélőközpont bemutatása.",()=>IL.main()],
+ ["howto","Hogyan megy?","Három lépés: kerüld, jelentsd, oszd meg.",()=>IL.howto()],
+ ["modes","Játékmódok","Hagyományos (vígaszági) és Die Hard.",()=>IL.modes()],
+ ["team","Csapatmeghívó","Barátok versenye – ki bírja tovább?",()=>IL.team()],
+ ["towns","Települések versenye","Melyik város marad bent a legtöbben?",()=>IL.towns()],
+ ["collective","Össznépi harc","A regisztráltak 10%-ának kell túlélnie.",()=>IL.collective()],
+ ["elim_mariah","Kiesés – Mariah","Megosztható kiesés-kép.",()=>IL.elim("mariah")],
+ ["elim_wham","Kiesés – Wham!","Megosztható kiesés-kép.",()=>IL.elim("wham")],
+ ["elim_feliz","Kiesés – Feliz","Megosztható kiesés-kép.",()=>IL.elim("feliz")],
+ ["game","Fülvédő futam","A mini játék: 1 perc = 1 nap.",()=>IL.game()],
+ ["badges","Jelvények","Öt szint, öt képesség.",()=>IL.badges()],
+ ["danger","Kerülendő helyek","Feltételezett és valódi veszélyzónák.",()=>IL.danger()]
+];
+
+const EMRE=new RegExp("("+EMRE_SRC+")️?","g"), EMTEST=new RegExp(EMRE_SRC);
+const NOICO=/^(TEXTAREA|OPTION|SCRIPT|STYLE|TITLE|SELECT|NOSCRIPT)$/;
+function icoizeText(n){
+  const p=n.parentNode; if(!p||NOICO.test(p.nodeName)) return;
+  const t=n.nodeValue; EMRE.lastIndex=0; let last=0,m,any=false; const f=document.createDocumentFragment();
+  while((m=EMRE.exec(t))){ any=true; if(m.index>last) f.appendChild(document.createTextNode(t.slice(last,m.index)));
+    const [nm,cl]=EMOJI[m[1]]; const tp=document.createElement("template"); tp.innerHTML=ico(nm,cl); f.appendChild(tp.content); last=m.index+m[0].length; }
+  if(!any) return; if(last<t.length) f.appendChild(document.createTextNode(t.slice(last))); p.replaceChild(f,n);
+}
+function icoize(root){
+  if(!root) return;
+  if(root.nodeType===3){ if(EMTEST.test(root.nodeValue)) icoizeText(root); return; }
+  if(root.nodeType!==1) return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT), list=[]; let n;
+  while((n=w.nextNode())) if(EMTEST.test(n.nodeValue)) list.push(n);
+  list.forEach(icoizeText);
+}
+const icoQ=new Set(); let icoRaf=0;
+new MutationObserver(ms=>{
+  for(const m of ms){ if(m.type==="characterData") icoQ.add(m.target); else m.addedNodes.forEach(x=>{ if(x.nodeType===1||x.nodeType===3) icoQ.add(x) }); }
+  if(!icoRaf) icoRaf=requestAnimationFrame(()=>{ icoRaf=0; const q=[...icoQ]; icoQ.clear(); q.forEach(icoize); });
+}).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+const _p2={};
+function cIco(ctx,n,x,y,s,col,lw){ const p=_p2[n]||(_p2[n]=new Path2D(ICONS[n]||ICONS.snow)); ctx.save(); ctx.translate(x,y); ctx.scale(s/24,s/24); ctx.lineWidth=lw||2; ctx.lineCap="round"; ctx.lineJoin="round";
+  if(FILLED.has(n)){ctx.fillStyle=col;ctx.fill(p)}else{ctx.strokeStyle=col;ctx.stroke(p)} ctx.restore(); }
+const SHARE_PAGE=p=>APP_URL+p;
 
 /* ====== Firebase beállítás (a webes Firebase-kulcs nem titok: a védelmet a Firestore-szabályok és a kulcs hivatkozó-korlátozása adja) ====== */
 const firebaseConfig = {
@@ -304,7 +491,7 @@ const auth = getAuth(app);
 let db; try{ db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }catch(e){ db=getFirestore(app); }
 
 let user=null, userDoc=null, userLoaded=false, myPart=null, mineReady=false, isAdmin=false, statsPublic=false, onboardFor=null;
-let elims=[], subs=[], rem=null, remLoaded=false, TEAMS=null, teamsLoading=false;
+let elimsReady=false, elims=[], subs=[], rem=null, remLoaded=false, TEAMS=null, teamsLoading=false;
 let route=ls.get("route0",null)||"home", pageName=null, mapFilter="all", firstAuth=true;
 const AD={loaded:false,loading:false,t:0,parts:[],elims:[],dangers:[],users:[]};
 
@@ -322,13 +509,39 @@ async function loadCollective(){ const d=await cachedDoc("collective",10*60e3); 
 loadCollective();
 const pendingTeamParam=new URLSearchParams(location.search).get("team");
 if(pendingTeamParam&&/^[A-Za-z0-9]{6}$/.test(pendingTeamParam)) ls.set("pendingTeam",pendingTeamParam.toUpperCase());
+{ const rp=new URLSearchParams(location.search).get("r"); if(rp==="alive"||rp==="out") ls.set("pendingRep",rp);
+  if(pendingTeamParam||rp){ try{ const u=new URLSearchParams(location.search); u.delete("team"); u.delete("r"); history.replaceState(null,"",location.pathname+(u.toString()?"?"+u:"")+location.hash); }catch(e){} } }
+
+/* ---------- „Élsz még?” e-mailből érkező válasz (?r=alive / ?r=out) ---------- */
+function checkPendingReply(){
+  const r=ls.get("pendingRep",null); if(!r||!user||!myPart||!mineReady||!elimsReady) return;
+  ls.set("pendingRep",null);
+  if(r==="alive"){
+    touchRem(true);
+    const left=KEYS.filter(k=>joinedOf(k)&&!myElim(k));
+    modal(`<div class="grip"></div><h3 style="margin:0 0 6px">Igen, még élsz!</h3><p>Örülünk, hogy még bírod${left.length?": "+left.map(k=>CH[k].short).join(", ")+" fronton bent vagy":""}. Tartsd magad karácsonyig!</p><p class="mut">${MOTTO}</p><button class="pri wide" id="x">Rendben</button>`);
+    $("#x").onclick=closeModal; return;
+  }
+  outFlow();
+}
+function outFlow(){
+  if(!canReport()){ modal(`<div class="grip"></div><h3>Kiesés bejelentése</h3><p>Bejelentést a játék ideje alatt (dec. 1. – dec. 24.), illetve utólag az év végéig lehet tenni.</p><button class="wide" id="x">Rendben</button>`); $("#x").onclick=closeModal; return; }
+  const open=KEYS.filter(k=>joinedOf(k)&&!myElim(k));
+  if(!open.length){ modal(`<div class="grip"></div><h3>Már mindenhonnan kiestél</h3><p>Minden frontról rögzítve van a kiesésed.</p><button class="wide" id="x">Rendben</button>`); $("#x").onclick=closeModal; return; }
+  if(myPart.mode!=="diehard"||open.length===1) return reportSheet(open[0]);
+  modal(`<div class="grip"></div><h3 style="margin:0 0 6px">Melyikből estél ki?</h3><p class="mut" style="margin:0 0 8px">Die Hard módban egyszerre több frontról is kieshettél. Jelöld be az összeset, amiből kiestél.</p>
+   ${open.map(k=>`<label class="chk"><input type="checkbox" class="ofr" value="${k}"> <b>${CH[k].name}</b> <span class="mut">(${esc(CH[k].song)})</span></label>`).join("")}
+   <div class="err" id="er"></div><button class="pri wide" id="ok">Tovább</button><button class="wide" style="margin-top:8px" id="x">Mégse</button>`);
+  $("#x").onclick=closeModal;
+  $("#ok").onclick=()=>{ const sel=[...document.querySelectorAll(".ofr:checked")].map(c=>c.value); if(!sel.length) return $("#er").textContent="Jelölj meg legalább egy frontot."; reportSheet(null,null,sel); };
+}
 
 function subscribe(){
-  subs.forEach(f=>f()); subs=[]; elims=[]; mineReady=false; myPart=null;
+  subs.forEach(f=>f()); subs=[]; elims=[]; mineReady=false; elimsReady=false; myPart=null;
   if(!user) return;
   /* csak a saját dokumentumaink élő figyelése – néhány olvasás, nem az egész gyűjtemény */
-  subs.push(onSnapshot(doc(db,"participations",`${YEAR}_${user.uid}`),s=>{myPart=s.exists()?{id:s.id,...s.data()}:null;mineReady=true;render();maybeOnboard();if(myPart){touchRem();checkPendingTeam()}},e=>{console.error(e);mineReady=true;render()}));
-  subs.push(onSnapshot(query(collection(db,"eliminations"),where("uid","==",user.uid),where("year","==",YEAR)),s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e)));
+  subs.push(onSnapshot(doc(db,"participations",`${YEAR}_${user.uid}`),s=>{myPart=s.exists()?{id:s.id,...s.data()}:null;mineReady=true;render();maybeOnboard();if(myPart){touchRem();checkPendingTeam();checkPendingReply()}},e=>{console.error(e);mineReady=true;render()}));
+  subs.push(onSnapshot(query(collection(db,"eliminations"),where("uid","==",user.uid),where("year","==",YEAR)),s=>{elims=s.docs.map(d=>({id:d.id,...d.data()}));elimsReady=true;render();checkPendingReply()},e=>console.error(e)));
 }
 function maybeOnboard(){
   if(user&&userLoaded&&mineReady&&(!userDoc||!myPart)&&onboardFor!==user.uid){ onboardFor=user.uid; onboarding(); }
@@ -342,6 +555,7 @@ onAuthStateChanged(auth, async u=>{
     }catch(e){console.error(e)}
   }
   userLoaded=true;
+  if(!u&&ls.get("pendingRep",null)) setTimeout(loginModal,400);
   if(firstAuth){ firstAuth=false; if(u&&phase()==="during") route="game"; }
   subscribe(); render(); maybeOnboard(); if(u) loadRem();
 });
@@ -401,8 +615,10 @@ function closePage(silent){ if(!pageName) return; stopGame(); pageName=null; $("
 addEventListener("popstate",()=>{ if(pageName){stopGame();pageName=null;$("#page").classList.add("hide")} });
 
 function render(){
-  $("#auth").innerHTML = user ? `<button class="sm" id="me">👤 ${esc(userDoc?.nick||"Profil")}</button>` : `<button class="sm pri" id="in">Belépés</button>`;
+  $("#auth").innerHTML = user ? `<button class="sm" id="me">👤 ${esc(userDoc?.nick||"Profil")}</button>${isAdmin?`<button class="sm adm" id="adm">🛠️ Admin</button>`:""}` : `<button class="sm pri" id="in">Belépés</button>`;
   $("#me")?.addEventListener("click",()=>openPage("profile"));
+  $("#adm")?.addEventListener("click",()=>openPage("admin"));
+  $("#brandico").innerHTML=ico("snow"); updInstall();
   $("#in")?.addEventListener("click",loginModal);
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("act",b.dataset.r===route));
   if(route==="map" && $("#map")){ refreshMarkers(); renderPage(); return; }
@@ -425,14 +641,14 @@ function viewHome(v){
   const ages=KEYS.map(k=>YEAR-CH[k].rel), total=ages.reduce((a,x)=>a+x,0);
   const stat = "";
   const cta = !user ? `<button class="pri wide" id="h-in">Belépek és játszom</button>` : `<button class="pri wide" id="h-go">Ugrás a játékhoz</button>`;
-  v.innerHTML=`<div class="hero">${hero}<h1>Christmas Survival Center</h1><p class="count">${line}</p><p class="sub">Három dal. Három front. Egyetlen cél: túlélni.</p></div>${stat}
-  <div style="margin:10px 0">${cta}</div>${collectiveHtml()}${badgeHtml()}<div id="vbanner"></div><div id="inst"></div>
+  v.innerHTML=`${confetti()}<div class="hero">${hero}<h1>Karácsonyi Túlélőközpont</h1><p class="count">${line}</p><p class="sub">Három dal. Három front. Egyetlen cél: túlélni.</p></div>${stat}
+  <div style="margin:10px 0">${cta}</div>${adventHtml()}${collectiveHtml()}${badgeHtml()}<div id="vbanner"></div><div id="inst"></div>
   <div class="card"><h3>Mi ez?</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátéka. December 1-jétől karácsony éjfélig próbáld elkerülni, hogy meghallgasd – <b>felismerd</b> – a három legismertebb karácsonyi dalt. Aki felismeri, kiesik, és ezt a telefonjáról egy koppintással jelentheti.</p>
   <p class="mut">${YEAR}-ben összesen ${total} évnyi karácsonyi zenei terror vár rád (${ages.join(" + ")} év).</p></div>
   <div class="card"><h3>A három front</h3>${KEYS.map(k=>`<div class="row" style="margin:8px 0"><span>${CH[k].ico} <b>${CH[k].name}</b></span><span class="mut">${CH[k].artist}: ${CH[k].song} (${YEAR-CH[k].rel} éves)</span></div>`).join("")}</div>
   <div class="card"><h3>Két játékmód</h3>
     <p><b>🎄 Hagyományos (vígaszági):</b> a Mariahrmageddonnal indulsz. Ha kiestél, a Whamageddon következik, ha abból is, akkor a Feliznavidageddon.</p>
-    <p><b>🔥 Die Hard:</b> mindhárom fronton egyszerre indulsz.</p></div>
+    <p><b>🔥 Die Hard:</b> mindhárom fronton egyszerre indulsz.</p><div class="illus">${IL.modes()}</div></div>
   <div class="card"><h3>Hogyan működik?</h3>
     <ol class="steps"><li><div><b>Regisztrálj</b> becenévvel, és válassz játékmódot.</div></li>
     <li><div><b>Kerüld a dalokat</b> – boltban, rádióban, vásárban, mindenhol.</div></li>
@@ -444,6 +660,20 @@ function viewHome(v){
   installBanner(); verifyBanner();
   $("#hfr")?.addEventListener("click",()=>openPage("teams"));
   $("#cinv")?.addEventListener("click",()=>inviteSheet());
+  $("#cshare")?.addEventListener("click",()=>fbShare(`Segíts legyőzni a Mariahrmageddont! Ha a regisztráltak 10%-a túléli karácsonyig, kollektíve győztünk. Minél többen indulunk, annál jobb!\n${SHARE_PAGE("osszneppi.html")}\n\n${MOTTO}`,"#mariahrmageddon",SHARE_PAGE("osszneppi.html")));
+  $("#tshare")?.addEventListener("click",()=>fbShare(`Melyik település bírja tovább? Add meg a lakóhelyed, és versenyezzünk!\n${SHARE_PAGE("telepulesek.html")}\n\n${MOTTO}`,"#mariahrmageddon",SHARE_PAGE("telepulesek.html")));
+}
+function confetti(){
+  if(phase()!=="after"||!user||!myPart||!isAlive()) return "";
+  const cols=["#d7263d","#2c6fa8","#e0932b","#2a9d6f","#8cc3ea"];
+  return `<div class="confetti">${Array.from({length:26},(_,i)=>`<i style="left:${(i*37)%100}%;background:${cols[i%5]};animation-delay:${(i%9)*.35}s"></i>`).join("")}</div>`;
+}
+function adventHtml(){
+  const ph=phase(); if(ph==="before"||!user||!myPart) return "";
+  const n=nowDate(), b=bounds(), cur=ph==="after"?25:Math.floor((n-b.start)/DAY)+1, out={};
+  myElims().forEach(e=>{ const d=e.occurredAt?.toDate?.(); if(d&&d.getMonth()===11) out[d.getDate()]=1; });
+  let h=""; for(let i=1;i<=24;i++) h+=`<span class="${out[i]?"t":i<=cur?"p":""}${i===cur?" c":""}">${out[i]?ico("skull"):i}</span>`;
+  return `<div class="card"><h3>Adventi naptár</h3><div class="advent">${h}</div><div class="mut">Zöld: túlélt nap · piros: kiesés napja</div></div>`;
 }
 const GOAL=10;
 function collectiveHtml(){
@@ -458,17 +688,41 @@ function collectiveHtml(){
   <p class="mut" style="margin:0 0 8px">Ha a regisztráltak legalább <b>${GOAL}%-a</b> karácsonyig bent marad, kollektíve túléltük. Dec. 24-ig bármikor kicsúszhatunk alóla, de az új meghívottak felhúzhatnak minket.</p>
   <div class="cbar"><i class="ca" style="width:${pct.toFixed(2)}%"></i><i class="co" style="width:${(100-pct).toFixed(2)}%"></i><span class="goal" style="left:${GOAL}%"><em>${GOAL}% cél</em></span></div>
   <div class="row" style="margin:6px 0"><span>🟢 Bent van: <b>${alive}</b> (${pct.toFixed(1).replace(".",",")}%)</span><span>🔴 Kiesett: <b>${reg-alive}</b></span></div>
-  ${verdict}${ph!=="after"?`<button class="sm pri" id="cinv" style="margin-top:8px">👥 Hívj meg még valakit!</button>`:""}
+  ${verdict}${ph!=="after"?`<button class="sm pri" id="cinv" style="margin-top:8px">👥 Hívj meg még valakit!</button> `:""}<button class="sm" id="cshare" style="margin-top:8px">📘 Megosztás</button> <button class="sm" id="tshare" style="margin-top:8px">🏘️ Települések versenye</button>
   <p class="mut" style="margin:8px 0 0;font-size:.8rem">Állapot: ${stamp(COLL.t)} (kb. óránként frissül)</p></div>`+townsHtml();
 }
 function townsHtml(){
   const list=(COLL?.towns||[]).filter(t=>t.n>=3).sort((a,b)=>(b.a/b.n)-(a.a/a.n)||b.n-a.n).slice(0,8);
   return `<div class="card"><h3>🏘️ Települések versenye</h3>${list.length?list.map((t,i)=>`<div class="bar"><span class="l">${i+1}. ${esc(t.l)}</span><i style="width:${Math.max(2,t.a/t.n*45)}%"></i><em>${t.a}/${t.n} (${Math.round(t.a/t.n*100)}%)</em></div>`).join(""):`<p class="mut" style="margin:0">Itt a településenként még bent lévők aránya látszik (legalább 3 játékos). Add meg a lakóhelyed a Profilodban, hogy a te városod is versenyezzen!</p>`}</div>`;
 }
+const MED=["#8cc3ea","#2c6fa8","#2a9d6f","#16324f","#e0932b"];
+const TIER_ICO=["tent","shield","medal","shades","crown"];
+const ABIL=["Alap képességek: ugrás és lebújás.","Dupla ugrás: a levegőben még egyszer ugorhatsz.","Kitörés: rövid sebezhetetlenség (E gomb).","Időlassítás: 2 másodpercre megállítja a hanghullámokat (Q gomb).","Induló pajzs: az első találatot kivédi."];
+function medalsHtml(){
+  const t=user&&myPart?tierInfo():{i:-1};
+  return `<div class="medals">${TIERS.map((x,i)=>`<button class="medal ${i<=t.i?"on":""}" data-tier="${i}" style="--mcol:${MED[i]}" aria-label="${esc(x[0])}"><span class="mc">${ico(TIER_ICO[i])}</span>${esc(x[0])}</button>`).join("")}</div>`;
+}
+function badgeModal(i){
+  const need=5*i, has=!!(user&&myPart), d=has?tierInfo().d:0, got=has&&d>=need, ended=has&&finalOutMs()!=null;
+  const why=i===0?"Jár mindenkinek, aki regisztrál és részt vesz a játékban.":`Jár, ha legalább ${need} napot túlélsz a játékban. A számolás december 1-jén (vagy a regisztrációdkor, ha az később van) kezdődik; hagyományos módban a Feliznavidageddon-kiesésedig, Die Hardban a harmadik front kiesésedig tart.`;
+  let st;
+  if(!user) st="Lépj be, és kezdj el gyűjteni!"; else if(!myPart) st="Állítsd be a játékmódodat, hogy számolni kezdhessünk.";
+  else if(got) st="Megszerezted – gratulálunk!";
+  else if(ended) st=`Sajnos már kiestél mindenhonnan, ezért a számláló megállt (${d.toFixed(1).replace(".",",")} nap) – idén ez a jelvény már nem jöhet össze.`;
+  else if(phase()==="before") st=`A számolás december 1-jén indul. Ehhez ${need} nap kell.`;
+  else st=`Még ${Math.max(1,Math.ceil(need-d))} nap kell hozzá (eddig ${d.toFixed(1).replace(".",",")} / ${need} nap).`;
+  modal(`<div class="grip"></div><div style="text-align:center"><div class="medal ${got?"on":""}" style="--mcol:${MED[i]};width:auto"><span class="mc" style="width:72px;height:72px"><svg class="i" style="width:36px;height:36px" viewBox="0 0 24 24"><path d="${ICONS[TIER_ICO[i]]}"/></svg></span></div><h3 style="margin:6px 0 2px">${esc(TIERS[i][0])}</h3><span class="tag ${got?"alive":"soon"}">${got?"Megszerezted":"Még nem járt ki"}</span></div>
+  <h3 style="margin:12px 0 4px">Miért jár?</h3><p style="margin:0">${why}</p>
+  <h3 style="margin:12px 0 4px">Mit ad a mini játékban?</h3><p style="margin:0">${ABIL[i]}${i>0?" A magasabb szint nehezebb, gyorsabb játékot is jelent.":""}</p>
+  <h3 style="margin:12px 0 4px">Hol tartasz?</h3>${has&&i>0?`<div class="prog"><i style="width:${Math.min(100,d/need*100).toFixed(1)}%"></i></div>`:""}<p style="margin:0">${st}</p>
+  <button class="wide" style="margin-top:12px" id="x">Bezár</button>`);
+  $("#x").onclick=closeModal;
+}
+document.addEventListener("click",e=>{ const t=e.target.closest?.("[data-tier]"); if(t) badgeModal(+t.dataset.tier); });
 function badgeHtml(){
-  if(!user||!myPart) return `<div class="card row"><div><b>👥 Versenyezz a barátaiddal!</b><div class="mut">Hívd meg őket, és nézzétek meg, ki éli túl tovább.</div></div><button class="sm" id="hfr">Barátok</button></div>`;
+  if(!user||!myPart) return `<div class="card"><h3>Jelvények</h3><p class="mut" style="margin:0">Minden ~5 túlélt nap új jelvényt ér. Koppints egy jelvényre, és megtudod, mit kell érte tenni.</p>${medalsHtml()}<div class="row"><b>Versenyezz a barátaiddal!</b><button class="sm" id="hfr">Barátok</button></div></div>`;
   const t=tierInfo();
-  return `<div class="card row"><div><span style="font-size:1.6rem">${TIERS[t.i][1]}</span> <b>${TIERS[t.i][0]}</b><div class="mut">${t.i<4?`Még ${t.left} nap a(z) ${TIERS[t.i+1][0]} szintig`:"Elérted a legmagasabb szintet!"}</div></div><button class="sm" id="hfr">👥 Barátok</button></div>`;
+  return `<div class="card"><div class="row"><div><b>${TIERS[t.i][0]}</b><div class="mut">${t.i<4?`Még ${t.left} nap a(z) ${TIERS[t.i+1][0]} szintig`:"Elérted a legmagasabb szintet!"}</div></div><button class="sm" id="hfr">👥 Barátok</button></div>${medalsHtml()}<div class="mut">Koppints egy jelvényre a részletekért.</div></div>`;
 }
 function verifyBanner(){
   const el=$("#vbanner"); if(!el||!user||user.emailVerified||user.providerData?.[0]?.providerId!=="password") return;
@@ -521,8 +775,8 @@ function lockedModal(k){
 let rulesTab="rules";
 function viewRules(v){
   v.innerHTML=`<h1 style="margin-top:.5em">Szabályok & GYIK</h1>
-  <div class="seg"><button data-t="rules" class="${rulesTab==="rules"?"sel":""}">Szabályok</button><button data-t="faq" class="${rulesTab==="faq"?"sel":""}">GYIK</button></div>
-  ${rulesTab==="rules"?rulesHtml():faqHtml()}`;
+  <div class="seg"><button data-t="rules" class="${rulesTab==="rules"?"sel":""}">Szabályok</button><button data-t="faq" class="${rulesTab==="faq"?"sel":""}">GYIK</button><button data-t="pics" class="${rulesTab==="pics"?"sel":""}">Képek</button></div>
+  ${rulesTab==="rules"?rulesHtml():rulesTab==="faq"?faqHtml():ILLUS_LIST.map(([k,t,d,f])=>`<div class="card"><h3>${t}</h3><div class="illus">${f()}</div><p class="mut" style="margin:6px 0 0">${d}</p></div>`).join("")}`;
   v.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{rulesTab=b.dataset.t;render()});
 }
 function rulesHtml(){return `
@@ -564,7 +818,7 @@ function faqHtml(){return FAQ.map(([q,a])=>`<details><summary>${esc(q)}</summary
 
 /* ---------- Térkép (mindenkinek; adatai az admin által óránként közzétett pillanatképből jönnek) ---------- */
 let mapObj=null, elimLayer=null, dangerLayer=null, leafletP=null, MS=null;
-let showElim=true, showDanger=true;
+let showElim=true, showDanger=true, showSusp=true;
 const CK={mariah:"m",wham:"w",feliz:"f"};
 const stamp=t=>new Date(t).toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
 function loadLeaflet(){
@@ -588,13 +842,14 @@ function viewMap(v){
   v.innerHTML=`<h1 style="margin-top:.5em">Térkép</h1>
   <p class="sub">Hol estek ki a játékosok (településenként összesítve, kb. 1 km-es pontossággal), és mely helyeket érdemes elkerülni.</p>
   <div class="row" style="margin-bottom:6px"><div>
-    <label class="pill"><input type="checkbox" id="lEl" ${showElim?"checked":""}> 🔴 Kiesések</label><label class="pill"><input type="checkbox" id="lDz" ${showDanger?"checked":""}> ⚠️ Kerülendő helyek</label></div>
+    <label class="pill"><input type="checkbox" id="lEl" ${showElim?"checked":""}> 🔴 Kiesések</label><label class="pill"><input type="checkbox" id="lDz" ${showDanger?"checked":""}> 🚨 Veszélyzónák</label><label class="pill"><input type="checkbox" id="lSu" ${showSusp?"checked":""}> ⚠️ Feltételezett</label></div>
     <button class="warn sm" id="addDz">⚠️ Kerülendő hely jelzése</button></div>
   <div class="chips" id="mchips"><button class="chip ${mapFilter==="all"?"sel":""}" data-f="all">Mind</button>${KEYS.map(k=>`<button class="chip ${mapFilter===k?"sel":""}" data-f="${k}">${CH[k].ico} ${CH[k].short}</button>`).join("")}</div>
-  <div id="map"></div><div class="mut" id="mupd" style="margin-top:6px"></div><div id="merr" class="err"></div>`;
+  <div id="map"></div><div class="mut" style="margin-top:6px">Piros, tömör kör: <b>veszélyzóna</b> – itt már kiesett valaki. Szaggatott, borostyán kör: <b>feltételezett</b> kerülendő hely (hallótávolsággal).</div><div class="mut" id="mupd" style="margin-top:6px"></div><div id="merr" class="err"></div>`;
   v.querySelectorAll("#mchips .chip").forEach(b=>b.onclick=()=>{mapFilter=b.dataset.f;v.querySelectorAll("#mchips .chip").forEach(x=>x.classList.toggle("sel",x===b));refreshMarkers()});
   $("#lEl").onchange=e=>{showElim=e.target.checked;refreshMarkers()};
   $("#lDz").onchange=e=>{showDanger=e.target.checked;refreshMarkers()};
+  $("#lSu").onchange=e=>{showSusp=e.target.checked;refreshMarkers()};
   $("#addDz").onclick=()=>user&&myPart?dangerModal():(user?onboarding():loginModal());
   loadLeaflet().then(()=>{
     if(route!=="map"||!$("#map")||mapObj) return;
@@ -620,37 +875,101 @@ function refreshMarkers(fit){
       m.addTo(elimLayer); pts.push([o.lat,o.lng]);
     });
   }
-  if(showDanger&&MS){
+  if(MS){
     (MS.dz||[]).filter(d=>mapFilter==="all"||(d.sg||[]).includes(mapFilter)).forEach(d=>{
-      const col=d.r==="extreme"?"#b91c1c":"#d97706";
-      const icon=L.divIcon({className:"",html:`<div style="background:${col};color:#fff;border:2px solid #fff;border-radius:99px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.35)">!</div>`,iconSize:[24,24],iconAnchor:[12,12]});
-      const songs=(d.sg||[]).map(x=>CH[x]?.short).filter(Boolean).join(", ");
-      L.marker([d.lat,d.lng],{icon}).bindPopup(`<b>⚠️ ${esc(d.p)}</b> (${esc(d.s)})<br><small>${esc(d.c)} · ${esc(songs)}${d.r==="extreme"?" · extrém zóna":""}</small>${d.note?`<p style="margin:4px 0 0;font-size:12px">„${esc(d.note)}”</p>`:""}`).addTo(dangerLayer);
+      const real=!!d.real; if(real?!showDanger:!showSusp) return;
+      const col=real?"#b91c1c":"#d97706", sz=real?26:20;
+      const icon=L.divIcon({className:"",html:`<div style="background:${real?col:"#fff"};color:${real?"#fff":col};border:2px ${real?"solid #fff":"dashed "+col};border-radius:99px;width:${sz}px;height:${sz}px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.35)">${real?"!":"?"}</div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+      const songs=(d.sg||[]).map(x=>CH[x]?.short).filter(Boolean).join(", "), ld={halk:"halk",kozepes:"közepes",hangos:"hangos"}[d.l]||"";
+      if(d.rad) L.circle([d.lat,d.lng],{radius:d.rad,color:col,weight:2,dashArray:real?null:"6 6",fillColor:col,fillOpacity:real?.2:.08}).addTo(dangerLayer);
+      L.marker([d.lat,d.lng],{icon}).bindPopup(`<b>${real?"Veszélyzóna":"Feltételezett kerülendő hely"}: ${esc(d.p)}</b> (${esc(d.s)})<br><small>${esc(d.c)} · ${esc(songs)}${ld?" · "+ld:""}${d.rad?" · kb. "+d.rad+" m":""}${real?" · "+d.n+" kiesés itt":""}</small>${d.note?`<p style="margin:4px 0 0;font-size:12px">„${esc(d.note)}”</p>`:""}`).addTo(dangerLayer);
     });
   }
   if((fit||!fitted)&&pts.length){ fitted=true; if(pts.length===1) mapObj.setView(pts[0],9); else mapObj.fitBounds(pts,{padding:[30,30],maxZoom:10}); }
 }
+let pickMap=null, pickMarker=null, pickCircle=null;
+const LOUD={halk:["Halk",15],kozepes:["Közepes",40],hangos:["Hangos",80]};
+function dzFormHtml(d){
+  d=d||{}; const ld=d.loud||"kozepes";
+  return `<label>Település</label><input id="dcity" list="cl2" value="${esc(d.settlement||ls.get("lastCity","Kecskemét"))}"><datalist id="cl2">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
+  <label>Helyszín neve (pl. Malom Központ, Főtéri vásár)</label><input id="dplace" maxlength="80" value="${esc(d.place||"")}">
+  <label>Cím (opcionális, ha a térképen jelölöd)</label><div class="row" style="flex-wrap:nowrap;gap:8px"><input id="daddr" maxlength="120" style="margin:4px 0 10px" value="${esc(d.addr||"")}"><button id="dfind" style="margin-bottom:6px">Keresés</button></div>
+  <label>Vagy bökj a térképre (a jelölő húzható)</label><div id="pmap" style="height:230px;border-radius:12px;border:1px solid var(--line);margin:4px 0 6px"></div>
+  <div class="row" style="margin-bottom:8px"><button class="sm" id="dloc">📍 Helyem</button><span class="mut" id="dhint"></span></div>
+  <label>Mennyire hangos?</label><div class="chips" id="dloud">${Object.entries(LOUD).map(([k,v])=>`<button class="chip ${k===ld?"sel":""}" data-l="${k}">${v[0]}</button>`).join("")}</div>
+  <label>Becsült hallótávolság: <b id="drv"></b> m</label><input type="range" id="drad" min="5" max="150" step="5" value="${d.radius||LOUD[ld][1]}">
+  <div class="mut" style="margin:-4px 0 8px">Kb. 60–80 dB hangnyomásnál a dal nagyjából ekkora körzetben ismerhető fel. A kör a térképen is látszik.</div>
+  <label>Kategória</label><select id="dcat">${DANGER_CATS.map(c=>`<option ${c===d.category?"selected":""}>${c}</option>`).join("")}</select>
+  <label>Hallott dalok</label>${KEYS.map(k=>`<label class="chk"><input type="checkbox" class="dsong" value="${k}" ${(d.songs?d.songs.includes(k):k==="mariah")?"checked":""}> ${CH[k].name}</label>`).join("")}
+  <label>Megjegyzés (opcionális, max. 200 karakter)</label><textarea id="dnote" rows="2" maxlength="200">${esc(d.note||"")}</textarea>`;
+}
+function dzBind(d){
+  d=d||{}; const ld=d.loud||"kozepes", S={pos:d.lat!=null?{lat:d.lat,lng:d.lng}:null,loud:ld,rad:d.radius||LOUD[ld][1],place:null};
+  const upd=()=>{ $("#drv").textContent=S.rad; $("#drad").value=S.rad; if(pickCircle) pickCircle.setRadius(S.rad); };
+  $("#dloud").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{ S.loud=b.dataset.l; S.rad=LOUD[S.loud][1]; $("#dloud").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x===b)); upd(); });
+  $("#drad").oninput=e=>{ S.rad=+e.target.value; upd(); };
+  loadLeaflet().then(()=>{
+    if(!$("#pmap")) return; if(pickMap){ try{pickMap.remove()}catch(e){} pickMarker=pickCircle=null; }
+    const cc=cityCoords($("#dcity").value), c=S.pos?[S.pos.lat,S.pos.lng]:cc?[cc.lat,cc.lng]:[47.1,19.5];
+    pickMap=L.map("pmap").setView(c,S.pos?17:cc?13:7);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap"}).addTo(pickMap);
+    const icon=L.divIcon({className:"pinx",html:ico("pin"),iconSize:[30,30],iconAnchor:[15,30]});
+    const place=ll=>{ S.pos={lat:+ll.lat.toFixed(4),lng:+ll.lng.toFixed(4)};
+      if(!pickMarker){ pickMarker=L.marker(ll,{icon,draggable:true}).addTo(pickMap); pickMarker.on("dragend",e=>place(e.target.getLatLng())); } else pickMarker.setLatLng(ll);
+      if(!pickCircle) pickCircle=L.circle(ll,{radius:S.rad,color:"#d97706",weight:2,dashArray:"6 6",fillOpacity:.12}).addTo(pickMap); else pickCircle.setLatLng(ll);
+      const h=$("#dhint"); if(h) h.textContent="Hely kijelölve."; };
+    S.place=place; pickMap.on("click",e=>place(e.latlng)); if(S.pos) place(S.pos);
+    setTimeout(()=>{ try{pickMap&&pickMap.invalidateSize()}catch(e){} },250);
+  }).catch(()=>{ const h=$("#dhint"); if(h) h.textContent="A térképhez internet kell – add meg a címet."; });
+  $("#dloc").onclick=()=>{ if(!navigator.geolocation) return; navigator.geolocation.getCurrentPosition(p=>{ const ll={lat:p.coords.latitude,lng:p.coords.longitude}; S.place&&S.place(ll); pickMap&&pickMap.setView([ll.lat,ll.lng],17); },()=>{ $("#dhint").textContent="Nem sikerült a helymeghatározás."; },{timeout:8000}); };
+  $("#dfind").onclick=async()=>{ const q=($("#daddr").value+" "+$("#dcity").value).trim(); if(q.length<3) return;
+    try{ const r=await (await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=hu&q="+encodeURIComponent(q))).json();
+      if(r[0]){ const ll={lat:+r[0].lat,lng:+r[0].lon}; S.place&&S.place(ll); pickMap&&pickMap.setView([ll.lat,ll.lng],17); } else $("#dhint").textContent="Nem találtam a címet – bökj a térképre.";
+    }catch{ $("#dhint").textContent="A címkeresés most nem érhető el – bökj a térképre."; } };
+  upd(); return S;
+}
+function dzRead(S){
+  const city=$("#dcity").value.trim(), place=$("#dplace").value.trim(), addr=$("#daddr").value.trim();
+  const songs=[...document.querySelectorAll("#modal .dsong:checked")].map(c=>c.value);
+  if(!city||place.length<2) return {err:"A település és a helyszín neve kötelező."};
+  if(!S.pos&&addr.length<3) return {err:"Adj meg címet, vagy bökj a térképre."};
+  if(!songs.length) return {err:"Jelölj meg legalább egy dalt."};
+  const data={settlement:city,place,category:$("#dcat").value,songs,riskLevel:"high",note:$("#dnote").value.trim(),loud:S.loud,radius:S.rad,addr};
+  if(S.pos){ data.lat=S.pos.lat; data.lng=S.pos.lng; }
+  return {data};
+}
 function dangerModal(){
   modal(`<div class="grip"></div><h3 style="margin:0 0 6px">⚠️ Kerülendő hely jelzése</h3>
-  <p class="mut" style="margin:0 0 8px">A jelzés a szervezők jóváhagyása után jelenik meg a térképen.</p>
-  <label>Település</label><input id="dcity" list="cl2" value="${esc(ls.get("lastCity","Kecskemét"))}"><datalist id="cl2">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
-  <label>Helyszín neve (pl. Malom Központ, Főtéri vásár)</label><input id="dplace" maxlength="80">
-  <label>Kategória</label><select id="dcat">${DANGER_CATS.map(c=>`<option>${c}</option>`).join("")}</select>
-  <label>Hallott dalok</label>${KEYS.map(k=>`<label class="chk"><input type="checkbox" value="${k}" ${k==="mariah"?"checked":""}> ${CH[k].name}</label>`).join("")}
-  <label>Veszélyesség</label><select id="drisk"><option value="high">⚠️ Magas</option><option value="extreme">🚨 Extrém zóna</option></select>
-  <label>Megjegyzés (opcionális, max. 200 karakter)</label><textarea id="dnote" rows="2" maxlength="200"></textarea>
-  <div class="err" id="er"></div><button class="warn wide" id="ok">Beküldés</button><button class="wide" style="margin-top:8px" id="x">Mégse</button>`);
+  <p class="mut" style="margin:0 0 8px">A jelzés a szervezők jóváhagyása után jelenik meg a térképen <b>feltételezett</b> helyként. <b>Veszélyzónává</b> akkor válik, ha valaki itt kiesik.</p>
+  ${dzFormHtml()}<div class="err" id="er"></div><button class="warn wide" id="ok">Beküldés</button><button class="wide" style="margin-top:8px" id="x">Mégse</button>`);
   $("#x").onclick=closeModal;
+  const S=dzBind();
   $("#ok").onclick=async()=>{
-    const city=$("#dcity").value.trim(), place=$("#dplace").value.trim();
-    const songs=[...document.querySelectorAll("#modal input[type=checkbox]:checked")].map(c=>c.value);
-    if(!city||place.length<2) return $("#er").textContent="A település és a helyszín megadása kötelező.";
-    if(!songs.length) return $("#er").textContent="Jelölj meg legalább egy dalt.";
+    const r=dzRead(S); if(r.err) return $("#er").textContent=r.err;
     try{
-      await addDoc(collection(db,"dangerZones"),{uid:user.uid,year:YEAR,settlement:city,place,category:$("#dcat").value,songs,riskLevel:$("#drisk").value,note:$("#dnote").value.trim(),approved:false,createdAt:serverTimestamp()});
+      await addDoc(collection(db,"dangerZones"),{...r.data,uid:user.uid,year:YEAR,approved:false,createdAt:serverTimestamp()});
+      ls.set("lastCity",r.data.settlement);
       modal(`<div class="grip"></div><h3>Köszönjük! 🙏</h3><p>A jelzés a szervezők jóváhagyása után jelenik meg a térképen.</p><button class="wide" id="x">Rendben</button>`);$("#x").onclick=closeModal;
     }catch(e){$("#er").textContent=msg(e)}
   };
+}
+function dzEdit(id){
+  const d=AD.dangers.find(x=>x.id===id); if(!d) return;
+  const n=AD.elims.filter(e=>e.zoneId===id).length;
+  modal(`<div class="grip"></div><h3 style="margin:0 0 6px">Kerülendő hely szerkesztése</h3><p class="mut" style="margin:0 0 8px">Beküldő: ${esc(nameOf(d.uid))} · kiesés itt: <b>${n}</b> ${n?"(ezért valódi veszélyzóna)":""}</p>
+  ${dzFormHtml(d)}
+  <label class="chk"><input type="checkbox" id="dapp" ${d.approved?"checked":""}> Jóváhagyva (megjelenik a térképen)</label>
+  <label class="chk"><input type="checkbox" id="dreal" ${d.real?"checked":""}> Kézzel valódi veszélyzónának jelölöm</label>
+  <div class="err" id="er"></div><button class="pri wide" id="ok">Mentés</button>
+  <div class="row" style="margin-top:8px"><button id="del" style="color:var(--red)">Törlés</button><button id="x">Mégse</button></div>`);
+  $("#x").onclick=closeModal;
+  const S=dzBind(d);
+  const after=async()=>{ await loadAdminData(true); try{ await publishSnapshots(); }catch(e){} };
+  $("#ok").onclick=async()=>{
+    const r=dzRead(S); if(r.err) return $("#er").textContent=r.err;
+    try{ await updateDoc(doc(db,"dangerZones",id),{...r.data,approved:$("#dapp").checked,real:$("#dreal").checked}); closeModal(); await after(); }catch(e){ $("#er").textContent=msg(e); }
+  };
+  $("#del").onclick=async()=>{ if(!confirm("Törlöd ezt a jelzést?")) return; try{ await deleteDoc(doc(db,"dangerZones",id)); closeModal(); await after(); }catch(e){ $("#er").textContent=msg(e); } };
 }
 
 /* ---------- Több (+) menü ---------- */
@@ -714,7 +1033,7 @@ function pageProfile(b){
   const noElim=myElims().length===0, t=tierInfo();
   b.innerHTML=`<div class="card"><h3>${esc(userDoc?.nick||"")} ${isAdmin?`<span class="tag alive">admin</span>`:""}</h3><p class="mut">Az e-mail-címed nem nyilvános.</p></div>
   <div class="card"><h3>${TIERS[t.i][1]} ${TIERS[t.i][0]}</h3><p class="mut" style="margin:0 0 8px">${t.d.toFixed(1).replace(".",",")} napot éltél túl a játékban.${t.i<4?` Még ${t.left} nap a(z) <b>${TIERS[t.i+1][0]}</b> szintig.`:" Elérted a legmagasabb szintet!"}</p>
-  <div>${TIERS.map((x,i)=>`<span class="pill" style="${i<=t.i?"background:#e8f6ee;border-color:#9ad3b5":"opacity:.5"}">${x[1]} ${x[0]}</span>`).join("")}</div>
+  ${medalsHtml()}
   <p class="mut" style="margin:8px 0 0">Minden kb. 5 túlélt nap új jelvényt ér, és a mini játékban új képességet ad.</p></div>
   <div class="card"><h3>${YEAR}. évi játékmódom</h3><p><span class="tag alive">${myPart.mode==="diehard"?"🔥 Die Hard":"🎄 Hagyományos"}</span></p>
   ${myPart.mode==="classic"?(noElim?`<button class="sm" id="todh">Váltás Die Hard módra</button><p class="mut">Csak addig lehetséges, amíg nem estél ki sehol.</p>`:`<p class="mut">Kiesés után a mód már nem váltható.</p>`):""}
@@ -752,10 +1071,12 @@ async function deleteAccount(){
 let deferred=null;
 addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferred=e;render()});
 addEventListener("appinstalled",()=>{deferred=null;render()});
-function installBanner(){
-  const el=$("#inst"); if(!el||standalone()||ls.get("noinst",false)) return;
-  el.innerHTML=`<div class="notice">📲 <b>Tedd fel a telefonodra</b>, hogy kiesés után két koppintással jelenthess. <div style="margin-top:8px"><button class="sm pri" id="ib">Hogyan?</button> <button class="sm" id="ix">Később</button></div></div>`;
-  $("#ib").onclick=()=>openPage("install"); $("#ix").onclick=()=>{ls.set("noinst",true);el.innerHTML=""};
+function installBanner(){}
+function updInstall(){
+  const b=$("#instbtn"); if(!b) return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent), show=!standalone()&&(!!deferred||ios);
+  b.classList.toggle("hide",!show); b.innerHTML=ico("install")+" App telepítés";
+  b.onclick=async()=>{ if(deferred){ deferred.prompt(); try{await deferred.userChoice}catch{} deferred=null; render(); } else openPage("install"); };
 }
 function pageInstall(b){
   if(standalone()){b.innerHTML=`<div class="notice">✅ Már telepítve van, így nyitottad meg.</div>`;return}
@@ -768,8 +1089,8 @@ function pageInstall(b){
 function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
-  <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v6 · ${YEAR}</p>`;
+  <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="adatkezeles.html">Adatkezelési tájékoztató</a> · <a href="aszf.html">ÁSZF</a> · <a href="impresszum.html">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
+  <p class="mut" style="text-align:center">v7 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
@@ -795,11 +1116,14 @@ function buildMapSnap(){
     const c=(e.lat!=null&&e.lng!=null)?{lat:e.lat,lng:e.lng}:cityCoords(e.settlement); if(!c) return;
     const o=(g[c.lat+","+c.lng]??={n:e.settlement,lat:c.lat,lng:c.lng,m:0,w:0,f:0}); o[CK[e.challenge]]++;
   });
-  const dz=[];
+  const dz=[], cnt={};
+  AD.elims.forEach(e=>{ if(e.zoneId) cnt[e.zoneId]=(cnt[e.zoneId]||0)+1; });
   AD.dangers.filter(d=>d.approved).forEach(d=>{
-    const c=cityCoords(d.settlement); if(!c) return;
-    let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h);
-    dz.push({p:d.place,s:d.settlement,c:d.category,sg:d.songs,r:d.riskLevel,note:d.note||"",lat:c.lat+((h%7)-3)*0.004,lng:c.lng+(((h>>3)%7)-3)*0.006});
+    let lat,lng;
+    if(d.lat!=null&&d.lng!=null){ lat=d.lat; lng=d.lng; }
+    else { const c=cityCoords(d.settlement); if(!c) return; let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h); lat=c.lat+((h%7)-3)*0.004; lng=c.lng+(((h>>3)%7)-3)*0.006; }
+    const n=cnt[d.id]||0;
+    dz.push({id:d.id,p:d.place,s:d.settlement,c:d.category,sg:d.songs,r:d.riskLevel,note:d.note||"",lat,lng,rad:d.radius||0,l:d.loud||"",n,real:!!(n||d.real)});
   });
   return {year:YEAR,t:Date.now(),cells:Object.values(g),dz};
 }
@@ -838,6 +1162,10 @@ function playersHtml(S){
   return list.length?list.slice(0,80).map(p=>{const lost=S._elimOf[p.uid]||new Set();
     return `<div class="row"><div><b>${esc(nameOf(p.uid))}</b> <span class="mut">(${p.mode==="diehard"?"Die Hard":"Hagyományos"})</span></div><div>${(p.challenges||[]).map(k=>`<span class="tag ${lost.has(k)?"dead":"alive"}">${CH[k].short}: ${lost.has(k)?"kiesett":"bent"}</span>`).join(" ")}</div></div>`}).join(""):"<span class='mut'>Nincs találat.</span>";
 }
+function citiesCard(){
+  const n=x=>String(x||"").trim().toLowerCase(), e=new Set(AD.elims.map(x=>n(x.settlement)).filter(Boolean)), h=new Set(AD.parts.map(x=>n(x.home)).filter(Boolean)), all=new Set([...e,...h]);
+  return `<div class="card"><b>Városok száma (csak adminnak)</b><div class="mut">Kiesések helyszíneként: <b>${e.size}</b> · játékosok lakóhelyeként: <b>${h.size}</b> · összesen különböző település: <b>${all.size}</b></div></div>`;
+}
 function statsHtml(S,admin){
   return `<div class="grid"><div class="card"><div class="num">${S.players}</div><div class="mut">játékos</div></div><div class="card"><div class="num">${S.active}</div><div class="mut">még játékban</div></div><div class="card"><div class="num">${S.elims}</div><div class="mut">kiesés</div></div></div>
   <div class="card"><span class="mut">🎄 Hagyományos: <b>${S.classic}</b> · 🔥 Die Hard: <b>${S.diehard}</b><br>Több fronton is kiesett játékos: <b>${S.multi}</b> · Die Hardban még sehol nem esett ki: <b>${S.dhAlive}</b></span></div>
@@ -846,7 +1174,7 @@ function statsHtml(S,admin){
   <h2>Legveszélyesebb települések</h2><div class="card">${bars(S.city)}</div>
   <h2>Legveszélyesebb helyzetek</h2><div class="card">${bars(S.circ)}</div>
   <p class="mut" style="text-align:center">Állapot: ${stamp(S.t)}${admin?" (élő, az admin adataiból)":" (kb. óránként frissül)"}</p>`+
-  (admin?`<h2>Die Hard túlélők, akik még sehol nem estek ki (${S._dh.length})</h2><div class="card">${S._dh.length?S._dh.slice(0,40).map(p=>esc(nameOf(p.uid))).join(" · "):"<span class='mut'>Még senki.</span>"}</div>
+  (admin?`${citiesCard()}<h2>Die Hard túlélők, akik még sehol nem estek ki (${S._dh.length})</h2><div class="card">${S._dh.length?S._dh.slice(0,40).map(p=>esc(nameOf(p.uid))).join(" · "):"<span class='mut'>Még senki.</span>"}</div>
   <h2>Hírfolyam</h2><div class="card feed">${AD.elims.length?[...AD.elims].sort((a,c)=>(c.reportedAt?.seconds||0)-(a.reportedAt?.seconds||0)).slice(0,20).map(e=>`<div>${CH[e.challenge]?.ico||"💀"} <b>${esc(nameOf(e.uid))}</b> kiesett: ${CH[e.challenge]?.name} — ${esc(e.settlement)} (${esc(e.circumstance)}), ${fmt(e.occurredAt)}${e.story?`<div class="mut">„${esc(e.story)}”</div>`:""}</div>`).join(""):"<span class='mut'>Még nincs kiesés.</span>"}</div>
   <h2>Játékosok</h2><div class="card"><input id="ps" placeholder="Keresés becenévre…" value="${esc(pSearch)}">
    <div class="row" style="gap:8px"><select id="pm" style="flex:1"><option value="all">Minden mód</option><option value="classic" ${pMode==="classic"?"selected":""}>Hagyományos</option><option value="diehard" ${pMode==="diehard"?"selected":""}>Die Hard</option></select>
@@ -889,14 +1217,16 @@ function pageAdmin(b){
   };
   const del=async(c,id,t)=>{ if(!confirm(t)) return; try{await deleteDoc(doc(db,c,id)); await loadAdminData(true)}catch(e){alert(msg(e))} };
   b.querySelectorAll("[data-del-elim]").forEach(x=>x.onclick=()=>del("eliminations",x.dataset.delElim,"Törlöd ezt a kiesést?"));
+  b.querySelectorAll("[data-edit-dz]").forEach(x=>x.onclick=()=>dzEdit(x.dataset.editDz));
   b.querySelectorAll("[data-del-dz]").forEach(x=>x.onclick=()=>del("dangerZones",x.dataset.delDz,"Törlöd ezt a jelzést?"));
   b.querySelectorAll("[data-ok-dz]").forEach(x=>x.onclick=async()=>{try{await updateDoc(doc(db,"dangerZones",x.dataset.okDz),{approved:true});await loadAdminData(true)}catch(e){alert(msg(e))}});
 }
-const dzRow=(d,pending)=>`<div class="row"><div><b>${esc(d.place)}</b> (${esc(d.settlement)}) · ${esc(d.category)}<br><span class="mut">${(d.songs||[]).map(x=>CH[x]?.short).join(", ")} · ${d.riskLevel==="extreme"?"🚨 extrém":"⚠️ magas"} · ${esc(nameOf(d.uid))}${d.note?` · „${esc(d.note)}”`:""}${cityCoords(d.settlement)?"":" · ⚠️ nincs koordináta a listában (nem kerül a térképre)"}</span></div><div>${pending?`<button class="sm on" data-ok-dz="${d.id}">Jóváhagyás</button> `:""}<button class="sm" data-del-dz="${d.id}">Törlés</button></div></div>`;
+const dzRow=(d,pending)=>{ const n=AD.elims.filter(e=>e.zoneId===d.id).length, real=n>0||d.real;
+  return `<div class="row"><div><b>${esc(d.place)}</b> (${esc(d.settlement)}) · ${esc(d.category)}<br><span class="mut">${(d.songs||[]).map(x=>CH[x]?.short).join(", ")} · ${real?"🚨 veszélyzóna ("+n+" kiesés"+(d.real?", kézi":"")+")":"⚠️ feltételezett"}${d.loud?" · "+LOUD[d.loud]?.[0]:""}${d.radius?" · kb. "+d.radius+" m":""} · ${esc(nameOf(d.uid))}${d.note?` · „${esc(d.note)}”`:""}${d.lat!=null||cityCoords(d.settlement)?"":" · ⚠️ nincs koordináta (nem kerül a térképre)"}</span></div><div>${pending?`<button class="sm on" data-ok-dz="${d.id}">Jóváhagyás</button> `:""}<button class="sm" data-edit-dz="${d.id}">Szerkesztés</button> <button class="sm" data-del-dz="${d.id}">Törlés</button></div></div>`; };
 
 /* ---------- Sheetek ---------- */
 const modal=h=>{const m=$("#modal");m.innerHTML=`<div>${h}</div>`;m.classList.remove("hide")};
-const closeModal=()=>$("#modal").classList.add("hide");
+const closeModal=()=>{ if(pickMap){ try{pickMap.remove()}catch(e){} pickMap=pickMarker=pickCircle=null; } $("#modal").classList.add("hide"); };
 $("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
 const msg=e=>({"auth/invalid-credential":"Hibás e-mail vagy jelszó.","auth/email-already-in-use":"Ez az e-mail már regisztrálva van.","auth/weak-password":"A jelszó legyen legalább 6 karakter.","auth/invalid-email":"Érvénytelen e-mail-cím.","auth/popup-closed-by-user":"A belépési ablakot bezártad.","permission-denied":"Ehhez nincs jogosultságod (vagy a játék ideje még nem kezdődött el).","auth/missing-email":"Add meg az e-mail-címedet.","auth/too-many-requests":"Túl sok próbálkozás, várj egy kicsit."}[e.code]||(String(e.code||"").startsWith("auth/api-key")?"Hibás Firebase API-kulcs az app beállításában.":"Hiba: "+(e.code||e.message)));
 
@@ -905,13 +1235,14 @@ function loginModal(){
   <button class="wide" style="margin-bottom:14px" id="g">Belépés Google-lel</button>
   <div class="mut" style="margin-bottom:6px">vagy e-mail + jelszó:</div>
   <input id="em" type="email" autocomplete="email" placeholder="e-mail"><input id="pw" type="password" autocomplete="current-password" placeholder="jelszó (min. 6 karakter)">
+  <label class="chk" style="align-items:flex-start"><input type="checkbox" id="acc"><span>Elolvastam és elfogadom a <a href="aszf.html" target="_blank" rel="noopener">Felhasználási feltételeket</a>, és tudomásul vettem az <a href="adatkezeles.html" target="_blank" rel="noopener">Adatkezelési tájékoztatót</a>. (Google-belépéshez és regisztrációhoz kötelező.)</span></label>
   <div class="err" id="er"></div>
   <div class="row"><button id="li" class="pri">Belépés</button><button id="re">Regisztráció</button><button id="x">Mégse</button></div>
   <p style="margin:12px 0 0"><a href="#" id="fp" style="color:var(--blue)">Elfelejtett jelszó?</a></p>`);
-  const run=async fn=>{try{await fn();closeModal()}catch(e){$("#er").textContent=msg(e)}};
-  $("#g").onclick=()=>run(async()=>{ try{ await signInWithPopup(auth,new GoogleAuthProvider()) }catch(e){ if(e.code==="auth/popup-blocked"||standalone()) await signInWithRedirect(auth,new GoogleAuthProvider()); else throw e } });
+  const run=async(fn,need)=>{ if(need&&!$("#acc").checked){ $("#er").textContent="A folytatáshoz fogadd el a Felhasználási feltételeket és az Adatkezelési tájékoztatót."; return; } try{await fn();closeModal()}catch(e){$("#er").textContent=msg(e)}};
+  $("#g").onclick=()=>run(async()=>{ try{ await signInWithPopup(auth,new GoogleAuthProvider()) }catch(e){ if(e.code==="auth/popup-blocked"||standalone()) await signInWithRedirect(auth,new GoogleAuthProvider()); else throw e } },true);
   $("#li").onclick=()=>run(()=>signInWithEmailAndPassword(auth,$("#em").value,$("#pw").value));
-  $("#re").onclick=()=>run(async()=>{const c=await createUserWithEmailAndPassword(auth,$("#em").value,$("#pw").value);try{await sendEmailVerification(c.user)}catch{}});
+  $("#re").onclick=()=>run(async()=>{const c=await createUserWithEmailAndPassword(auth,$("#em").value,$("#pw").value);try{await sendEmailVerification(c.user)}catch{}},true);
   $("#fp").onclick=async e=>{ e.preventDefault(); const em=$("#em").value.trim(), er=$("#er");
     if(!em){er.style.color="";er.textContent="Írd be fent az e-mail-címedet, aztán koppints újra ide.";return}
     try{ await sendPasswordResetEmail(auth,em); er.style.color="var(--grn)"; er.textContent="Ha van ilyen fiók, elküldtük a jelszó-visszaállító e-mailt (nézd meg a spam mappát is)."; }
@@ -968,15 +1299,15 @@ function infoModal(k){
 
 /* Kiesés bejelentése */
 const dist=(a,b,c,d)=>{const r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)/2*r);return Math.sqrt(x*x+y*y)*6371};
-function reportSheet(k,existing){
-  const e=existing||{}; let gps=null, circ=e.circumstance||"", custom=!!existing;
+function reportSheet(k,existing,multi){
+  const ks=multi||[k]; k=ks[0]; const e=existing||{}; let gps=null, circ=e.circumstance||"", custom=!!existing;
   modal(`<div class="grip"></div><h3 style="margin:0 0 4px">${CH[k].ico} ${existing?"Bejelentés szerkesztése":"Kiestem!"}</h3>
-  <p class="mut" style="margin:0 0 8px">${CH[k].name}${existing?"":" · a kiesés véglegesen rögzül"}</p>
+  <p class="mut" style="margin:0 0 8px">${ks.map(x=>CH[x].name).join(" + ")}${existing?"":" · a kiesés véglegesen rögzül"}</p>
   <label>Mikor?</label><div id="whenbox"></div>
   <label>Hol? (település)</label>
   <div class="row" style="flex-wrap:nowrap;gap:8px"><input id="city" list="cl" style="margin:4px 0 10px" value="${esc(e.settlement||ls.get("lastCity","Kecskemét"))}"><button id="loc" style="margin-bottom:6px;white-space:nowrap">📍 Helyem</button></div>
   <datalist id="cl">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
-  <div class="mut" id="lochint" style="margin:-6px 0 8px"></div>
+  <div class="mut" id="lochint" style="margin:-6px 0 8px"></div><div id="zbox"></div>
   <label>Körülmény</label>
   <div class="chips" id="circ">${CIRC.map(c=>`<button class="chip ${c===circ?"sel":""}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
   <label>Pontos helyszín (opcionális, pl. főtér)</label><input id="place" maxlength="80" value="${esc(e.place||"")}">
@@ -991,7 +1322,10 @@ function reportSheet(k,existing){
   drawWhen();
   $("#x").onclick=closeModal;
   $("#circ").querySelectorAll(".chip").forEach(b=>b.onclick=()=>{circ=b.dataset.c;$("#circ").querySelectorAll(".chip").forEach(x=>x.classList.toggle("sel",x===b))});
-  $("#city").addEventListener("input",()=>{gps=null;$("#lochint").textContent=""});
+  const fillZ=()=>{ const c=($("#city").value||"").trim().toLowerCase(); const zs=(MS?.dz||[]).filter(d=>d.id&&String(d.s).trim().toLowerCase()===c);
+    $("#zbox").innerHTML=zs.length?`<label>Kerülendő helyen estél ki? (opcionális)</label><select id="zsel"><option value="">Nem / nincs a listán</option>${zs.map(d=>`<option value="${esc(d.id)}" ${d.id===e.zoneId?"selected":""}>${esc(d.p)}</option>`).join("")}</select>`:""; };
+  cachedDoc("mapSnapshot",15*60e3).then(d=>{ if(d&&d.year===YEAR) MS=d; fillZ(); }); fillZ();
+  $("#city").addEventListener("input",()=>{gps=null;$("#lochint").textContent="";fillZ()});
   $("#loc").onclick=()=>{
     const h=$("#lochint"); h.textContent="Helymeghatározás…";
     if(!navigator.geolocation){h.textContent="A böngésző nem támogatja a helymeghatározást – írd be a települést.";return}
@@ -1016,32 +1350,34 @@ function reportSheet(k,existing){
     const c=gps||cityCoords(city);
     const data={settlement:city,place:$("#place").value.trim(),circumstance:circ,story:$("#story").value.trim(),occurredAt:Timestamp.fromDate(when)};
     if(c){data.lat=c.lat;data.lng=c.lng}
+    const zs=$("#zsel")?.value; if(zs) data.zoneId=zs; else if(existing&&e.zoneId) data.zoneId=deleteField();
     try{
       const ref=doc(db,"eliminations",`${user.uid}_${k}_${YEAR}`);
       if(existing){ await updateDoc(ref,data); closeModal(); return; }
-      await setDoc(ref,{...data,uid:user.uid,challenge:k,year:YEAR,reportedAt:serverTimestamp()});
+      for(const kk of ks) await setDoc(doc(db,"eliminations",`${user.uid}_${kk}_${YEAR}`),{...data,uid:user.uid,challenge:kk,year:YEAR,reportedAt:serverTimestamp()});
       ls.set("lastCity",city);
       let opened=null;
       if(myPart.mode==="classic"&&NEXT[k]&&!joinedOf(NEXT[k])){
         try{ await updateDoc(doc(db,"participations",myPart.id),{challenges:[...new Set([...(myPart.challenges||[]),NEXT[k]])]}); opened=NEXT[k]; }catch(err){console.error(err)}
       }
-      setTimeout(()=>doneSheet(k,data,opened),150); setTimeout(afterElim,900);
+      setTimeout(()=>doneSheet(k,data,opened,ks),150); setTimeout(afterElim,900);
     }catch(err){er.textContent=msg(err)}
   };
 }
 
 /* Megosztás */
 function shareText(k,e){
+  const ks=Array.isArray(k)?k:[k]; k=ks[0]; const names=ks.map(x=>CH[x].name).join(" és "), tags=ks.map(x=>CH[x].tag).join(" ");
   const t=e.occurredAt.toDate();
-  return `🖤 Szomorúan tudatom, hogy az Úr ${YEAR}. évében ${t.toLocaleDateString("hu-HU",{month:"long",day:"numeric"})} ${t.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}-kor kiestem a ${CH[k].name} kihíváson. (${e.settlement}${e.place?", "+e.place:""} – ${e.circumstance}) ${CH[k].tag}\n\n🎄 Szervező: Kecskeméti Fiatalok Társasága – ${FB_PAGE_SHOW}\n📲 Játssz te is: ${APP_URL}\n\n${MOTTO}`;
+  return `🖤 Szomorúan tudatom, hogy az Úr ${YEAR}. évében ${t.toLocaleDateString("hu-HU",{month:"long",day:"numeric"})} ${t.toLocaleTimeString("hu-HU",{hour:"2-digit",minute:"2-digit"})}-kor kiestem a ${names} kihíváson. (${e.settlement}${e.place?", "+e.place:""} – ${e.circumstance}) ${tags}\n\n🎄 Szervező: Kecskeméti Fiatalok Társasága – ${FB_PAGE_SHOW}\n📲 Játssz te is: ${APP_URL}\n\n${MOTTO}`;
 }
 async function fbShare(text,tag,url){
   try{await navigator.clipboard.writeText(text)}catch{}
   window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url||APP_URL)}&hashtag=${encodeURIComponent(tag)}`,"_blank","noopener");
 }
 function afterElim(){ touchRem(true); if(TEAMS&&TEAMS.length) syncMyTeamEntries().then(()=>render()); else loadTeams(true); }
-function doneSheet(k,d,opened){
-  const text=shareText(k,d);
+function doneSheet(k,d,opened,ks){
+  const text=shareText(ks||k,d);
   modal(`<div class="grip"></div><h3 style="margin:0 0 6px">💀 Rögzítettük a kiesésed</h3>
   <p class="mut">Posztold ki Facebookra is – a szabályok szerint ez is a játék része.</p>
   <textarea id="tx" rows="7">${esc(text)}</textarea>
@@ -1051,7 +1387,7 @@ function doneSheet(k,d,opened){
   ${opened?`<div class="notice" style="margin-top:12px">Vígaszág: megnyílt a <b>${CH[opened].name}</b> – a „${CH[opened].song}” elkerülésével bent maradhatsz.</div>`:(k==="feliz"||(myPart&&myPart.mode==="diehard"&&!NEXT[k])?"":"")}`);
   $("#x").onclick=()=>{closeModal();render()};
   $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText($("#tx").value);$("#cp").textContent="Másolva ✓"}catch{$("#tx").select()}};
-  $("#fb").onclick=()=>fbShare($("#tx").value,CH[k].tag);
+  $("#fb").onclick=()=>fbShare($("#tx").value,CH[k].tag,SHARE_PAGE("kiesett-"+k+".html"));
   $("#pc").onclick=()=>postcardModal(k,d);
   $("#inv2").onclick=()=>inviteSheet();
 }
@@ -1075,16 +1411,17 @@ function drawPostcard(cv,k,e){
   ctx.strokeStyle="rgba(239,68,68,.65)"; ctx.lineWidth=6; ctx.strokeRect(48,48,W-96,H-96);
   ctx.textAlign="center"; ctx.fillStyle="#cbd5e1"; ctx.font="700 32px system-ui,sans-serif"; ctx.fillText(`CHRISTMAS SURVIVAL CENTER ${YEAR}`,W/2,130);
   ctx.fillStyle="#94a3b8"; ctx.font="500 26px system-ui,sans-serif"; ctx.fillText(myPart?.mode==="diehard"?"DIE HARD MÓD":"HAGYOMÁNYOS MÓD",W/2,178);
-  ctx.font="100px system-ui,sans-serif"; ctx.fillText("💀",W/2,360);
+  cIco(ctx,"skull",W/2-70,230,140,"#fca5a5",1.6);
   ctx.fillStyle="#fca5a5"; ctx.font="800 58px system-ui,sans-serif"; ctx.fillText("ELESETT A HARCBAN",W/2,510);
   ctx.fillStyle="#fff"; ctx.font="800 52px system-ui,sans-serif"; ctx.fillText(userDoc?.nick&&myPart?.publicProfile!==false?userDoc.nick:"Rejtőzködő túlélő",W/2,600);
   ctx.fillStyle=c.accent; ctx.font="700 44px system-ui,sans-serif"; ctx.fillText(c.name.toUpperCase(),W/2,695);
   ctx.fillStyle="#e2e8f0"; ctx.font="500 30px system-ui,sans-serif"; ctx.fillText(`„${c.artist}: ${c.song}”`,W/2,750);
   ctx.fillStyle="rgba(255,255,255,0.08)"; ctx.fillRect(100,815,W-200,240);
   ctx.fillStyle="#fff"; ctx.font="600 30px system-ui,sans-serif";
-  ctx.fillText(`📅 ${occ.toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}`,W/2,885);
-  ctx.fillText(`📍 ${e.settlement}${e.place?" – "+e.place:""}`,W/2,945);
-  ctx.fillStyle="#cbd5e1"; ctx.fillText(`🎧 ${e.circumstance}`,W/2,1005);
+  const li=(n,t,y,col)=>{ const w=ctx.measureText(t).width; ctx.fillStyle=col; ctx.fillText(t,W/2+22,y); cIco(ctx,n,W/2+22-w/2-52,y-34,38,col,2); };
+  ctx.textAlign="center"; li("cal",occ.toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}),885,"#fff");
+  li("pin",`${e.settlement}${e.place?" – "+e.place:""}`,945,"#fff");
+  li("phones",e.circumstance,1005,"#cbd5e1");
   ctx.fillStyle="#94a3b8"; ctx.font="700 30px system-ui,sans-serif"; ctx.fillText(c.tag,W/2,1130);
   ctx.fillStyle="#64748b"; ctx.font="500 26px system-ui,sans-serif"; ctx.fillText("Kecskeméti Fiatalok Társasága · "+FB_PAGE_SHOW,W/2,1230);
   ctx.fillStyle="#475569"; ctx.font="500 22px system-ui,sans-serif"; ctx.fillText(APP_URL.replace(/^https?:\/\//,"").slice(0,60),W/2,1275);
@@ -1118,11 +1455,11 @@ function tierInfo(){ const d=survDays(), i=Math.min(4,Math.floor(d/5)); return {
 
 /* ---------- Meghívás + baráti csapatok ---------- */
 function inviteText(code){
-  const url=code?`${APP_URL}?team=${code}`:APP_URL;
+  const url=code?`${APP_URL}meghivo.html?team=${code}`:`${APP_URL}meghivo.html`;
   return `🎄 Meghívlak a Karácsonyi Túlélőközpontba! Mariahrmageddon, Whamageddon, Feliznavidageddon – december 1-től karácsonyig kerüld el a három dalt, és versenyezzünk, ki éli túl tovább! 😈\n👉 ${url}\n\n${MOTTO}`;
 }
 function inviteSheet(code){
-  const text=inviteText(code), url=code?`${APP_URL}?team=${code}`:APP_URL;
+  const text=inviteText(code), url=code?`${APP_URL}meghivo.html?team=${code}`:`${APP_URL}meghivo.html`;
   modal(`<div class="grip"></div><h3 style="margin:0 0 6px">👥 Barát meghívása</h3>
   <p class="mut" style="margin:0 0 8px">${code?"Ezzel a linkkel a barátod egyből a csapatodba kerül.":"Küldd el a barátaidnak, és versenyezzetek, ki éli túl tovább!"}</p>
   <textarea id="tx" rows="6">${esc(text)}</textarea>
@@ -1198,12 +1535,12 @@ function teamCard(t){
 }
 function pageTeams(b){
   if(!user||!myPart){ b.innerHTML=`<div class="card"><p>A csapatokhoz előbb lépj be, és állítsd be a játékmódodat.</p><button class="pri" id="tl">Tovább</button></div>`; $("#tl").onclick=()=>{closePage();user?onboarding():loginModal()}; return }
-  b.innerHTML=`<div class="card"><h3>👥 Hívd meg a barátaidat</h3><p class="mut" style="margin:0 0 8px">Versenyezzetek, ki éli túl tovább! Hozz létre egy csapatot, és küldd el a meghívó linkjét.</p>
+  b.innerHTML=`<div class="illus">${IL.team()}</div><div class="card"><h3>👥 Hívd meg a barátaidat</h3><p class="mut" style="margin:0 0 8px">Versenyezzetek, ki éli túl tovább! Hozz létre egy csapatot, és küldd el a meghívó linkjét.</p>
    <label>Csapat neve</label><input id="tn" maxlength="30" placeholder="pl. Irodai túlélők"><button class="pri wide" id="tc">Csapat létrehozása</button><div class="err" id="terr"></div></div>
    <div class="card"><label>Kaptál meghívó kódot? (6 karakter)</label><input id="tj" maxlength="6" style="text-transform:uppercase"><button class="wide" id="tjb">Csatlakozás kóddal</button></div>
    <div class="card"><button class="wide" id="tinv">📤 Általános meghívó küldése (csapat nélkül)</button></div>
-   <h2>Csapataid</h2>${TEAMS===null?"<p class='mut'>Betöltés…</p>":(TEAMS.length?TEAMS.map(teamCard).join(""):"<p class='mut'>Még nem vagy egy csapatban sem.</p>")}
-   <p class="mut">Rangsor: aki még bent van, elöl áll; utána a kiesettek, minél tovább bírta, annál előrébb. (M = Mariah, W = Wham, F = Feliz)</p>`;
+   <h2>Csapataid</h2>${TEAMS===null?"<p class='mut'>Betöltés…</p>":(TEAMS.length?TEAMS.map(teamCard).join(""):`<div class="empty">${ico("snowman")}Még nem vagy egy csapatban sem.</div>`)}
+   <p class="mut">Rangsor: aki még bent van, elöl áll; utána a kiesettek, minél tovább bírta, annál előrébb. (M = Mariah, W = Wham, F = Feliz) A csapat nem helyettesíti az egyéni játékot: aki a meghívásodra csatlakozik, egyénileg is játékos marad, és az országos, települési és össznépi állásban is számít.</p>`;
   $("#tc").onclick=async()=>{ const n=$("#tn").value.trim(); if(n.length<2) return $("#terr").textContent="Adj nevet a csapatnak (min. 2 karakter)."; try{ const code=await createTeam(n); inviteSheet(code) }catch(e){ $("#terr").textContent=msg(e) } };
   $("#tjb").onclick=async()=>{ const c=$("#tj").value.trim(); if(c.length!==6) return $("#terr").textContent="A kód 6 karakter."; try{ await joinTeam(c) }catch(e){ $("#terr").textContent=e.code?msg(e):e.message } };
   $("#tinv").onclick=()=>inviteSheet();
@@ -1287,12 +1624,12 @@ function stopGame(){ if(G){ cancelAnimationFrame(G.raf); removeEventListener("ke
 function pageMini(b){
   const t=tierInfo().i;
   b.innerHTML=`<div class="row" style="margin:6px 0"><span class="tag alive">${TIERS[t][1]} ${TIERS[t][0]}</span><label class="chk" style="margin:0"><input type="checkbox" id="prac"> Gyakorló mód</label></div>
-  <p class="mut" style="margin:4px 0 8px"><b>1 perc játék = 1 nap.</b> Éld túl a 24 napot! Alacsony hanghullám → ugorj (▲), magas → bújj le (▼). Egyre gyorsabb és nehezebb. 🎁 = meglepetés (hasznos és csapda is lehet).</p>
+  <p class="mut" style="margin:4px 0 8px"><b>1 perc játék = 1 nap.</b> Éld túl a 24 napot! Alacsony hanghullám → ugorj (▲), magas → bújj le (▼). Egyre gyorsabb és nehezebb. Telefonon a játéktéren is irányíthatsz: húzás balra/jobbra = mozgás, felfelé húzás vagy koppintás = ugrás, lefelé húzva tartva = lebújás. 🎁 = meglepetés (hasznos és csapda is lehet).</p>
   <canvas id="gc" width="360" height="240"></canvas>
   <div class="pad"><button class="gbtn" id="bl" aria-label="balra">${IC.left}</button><button class="gbtn" id="br" aria-label="jobbra">${IC.right}</button><button class="gbtn" id="bu" aria-label="ugrás">${IC.up}</button><button class="gbtn" id="bd" aria-label="lebújás">${IC.down}</button></div>
   <div class="pad2"><button class="gbtn ab" id="ba">${IC.bolt}<small>Kitörés (E)</small></button><button class="gbtn ab" id="bf">${IC.time}<small>Időlassítás (Q)</small></button></div>
   <p class="mut" style="margin:0 0 4px"><span id="gbest"></span></p><p class="mut" style="margin:0 0 6px" id="gstat"></p>
-  <details><summary>Jelvények és képességek</summary><p class="mut">${TIERS.map((x,i)=>`${x[1]} <b>${x[0]}</b>: ${["alap","dupla ugrás (levegőben még egyszer ▲)","kitörés ⚡: rövid sebezhetetlenség","időlassítás ⏱: megállítja a hanghullámokat 2 mp-re","induló pajzs"][i]}`).join("<br>")}<br>A magasabb szint nehezebb, gyorsabb játékot is jelent. Gyakorló módban minden képességet kipróbálhatsz (nincs ranglista).<br><b>Hitelesítés:</b> a ranglistára kerülő futamot a szerver lejátssza és ellenőrzi, kamu eredményt nem fogad el.</p></details>
+  <h3 style="margin:10px 0 0">Jelvények és képességek</h3>${medalsHtml()}<p class="mut" style="margin:0 0 8px">Koppints egy jelvényre: megtudod, miért jár, mit tud, és mennyi hiányzik hozzá. Gyakorló módban minden képességet kipróbálhatsz.</p>
   <h3>🏆 Ranglista</h3><div id="lb" class="arcade"><div class="mut">Betöltés…</div></div>`;
   const cv=$("#gc"), go=()=>startGame(cv,t,$("#prac").checked);
   $("#prac").onchange=go; go(); loadLb();
@@ -1353,7 +1690,16 @@ function startGame(cv,tier,practice){
   $("#bu")?.addEventListener("pointerdown",e=>{e.preventDefault();jump()});
   $("#ba")?.addEventListener("pointerdown",e=>{e.preventDefault();act(7)});
   $("#bf")?.addEventListener("pointerdown",e=>{e.preventDefault();act(8)});
-  cv.addEventListener("pointerdown",()=>restart());
+  const TG={id:null,x:0,y:0,t:0,moved:false,jumped:false};
+  const relG=()=>{ setHeld("l",false); setHeld("r",false); setHeld("d",false); };
+  cv.addEventListener("pointerdown",e=>{ e.preventDefault(); if(sim.S.over){ restart(); return; } if(TG.id!==null) return;
+    TG.id=e.pointerId; TG.x=e.clientX; TG.y=e.clientY; TG.t=performance.now(); TG.moved=false; TG.jumped=false; try{cv.setPointerCapture(e.pointerId)}catch{} });
+  cv.addEventListener("pointermove",e=>{ if(e.pointerId!==TG.id||sim.S.over) return; const dx=e.clientX-TG.x, dy=e.clientY-TG.y, TH=16;
+    if(Math.abs(dx)>TH||Math.abs(dy)>TH) TG.moved=true;
+    setHeld("l",dx<-TH); setHeld("r",dx>TH); setHeld("d",dy>22);
+    if(dy<-26&&!TG.jumped){ TG.jumped=true; jump(); } else if(dy>-10) TG.jumped=false; });
+  const endG=e=>{ if(e.pointerId!==TG.id) return; const tap=!TG.moved&&performance.now()-TG.t<350; TG.id=null; relG(); if(tap&&!sim.S.over) jump(); };
+  cv.addEventListener("pointerup",endG); cv.addEventListener("pointercancel",endG);
   let last=performance.now();
   function frame(now){
     const dtm=Math.min(0.1,(now-last)/1000); last=now; acc+=dtm;
@@ -1374,7 +1720,7 @@ function startGame(cv,tier,practice){
     notes.forEach(nt=>{ctx.fillStyle="rgba(215,38,61,.55)";ctx.font="14px sans-serif";ctx.fillText("♪",nt.x,nt.y)});
     drawMariah(ctx,318,GY,S.mouth>0);
     S.waves.forEach(w=>drawWave(ctx,{...w,x:ip(w.x,w.px)}));
-    S.gifts.forEach(g=>{ ctx.font="20px sans-serif"; ctx.textAlign="left"; ctx.fillText("🎁",ip(g.x,g.px),g.y+18); });
+    S.gifts.forEach(g=>{ cIco(ctx,"gift",ip(g.x,g.px),g.y-2,22,"#e0932b",2); });
     const hx=ip(P.x,P.px), hy=ip(P.y,P.py);
     if(P.inv>0) ctx.globalAlpha=.5;
     drawHero(ctx,{x:hx,y:hy,crouch:P.crouch}); ctx.globalAlpha=1;
@@ -1384,10 +1730,13 @@ function startGame(cv,tier,practice){
     ctx.fillStyle="#16324f"; ctx.font="700 13px system-ui,sans-serif"; ctx.textAlign="left"; ctx.fillText(`Nap ${dd.toFixed(1).replace(".",",")} / 24`,10,18);
     ctx.fillStyle="rgba(22,50,79,.15)"; ctx.fillRect(10,24,150,5); ctx.fillStyle="#d7263d"; ctx.fillRect(10,24,150*dd/24,5);
     ctx.font="12px system-ui,sans-serif"; ctx.textAlign="right";
-    ctx.fillText(`${S.shield>0?"🛡️×"+S.shield+"  ":""}${T>=2?(S.dashCd>0?"⚡"+Math.ceil(S.dashCd):"⚡ kész"):""}  ${T>=3?(S.freezeCd>0?"⏱"+Math.ceil(S.freezeCd):"⏱ kész"):""}`,W-10,18); ctx.textAlign="left";
+    { let hx2=W-10; const put=(icon,txt,col)=>{ const w=ctx.measureText(txt).width; ctx.fillStyle=col; ctx.fillText(txt,hx2,18); cIco(ctx,icon,hx2-w-17,4,15,col,2.2); hx2-=w+28; };
+      if(T>=3) put("timer",S.freezeCd>0?String(Math.ceil(S.freezeCd)):"kész",S.freezeCd>0?"#6b86a0":"#2a9d6f");
+      if(T>=2) put("bolt",S.dashCd>0?String(Math.ceil(S.dashCd)):"kész",S.dashCd>0?"#6b86a0":"#2a9d6f");
+      if(S.shield>0) put("shield","×"+S.shield,"#2c6fa8"); ctx.textAlign="left"; }
     if(S.msgT>0){ ctx.fillStyle="rgba(22,50,79,.85)"; ctx.font="700 14px system-ui,sans-serif"; ctx.textAlign="center"; ctx.fillText(S.msg,W/2,60); ctx.textAlign="left"; }
     if(S.over){ ctx.fillStyle="rgba(22,50,79,.78)"; ctx.fillRect(15,70,330,100); ctx.fillStyle="#fff"; ctx.textAlign="center";
-      ctx.font="700 18px system-ui,sans-serif"; ctx.fillText(S.won?"TÚLÉLTED KARÁCSONYIG! 🎄🎉":"Felismerted a dalt! 💀",W/2,102);
+      ctx.font="700 18px system-ui,sans-serif"; ctx.fillText(S.won?"TÚLÉLTED KARÁCSONYIG!":"Felismerted a dalt!",W/2,106); cIco(ctx,S.won?"tree":"skull",W/2-11,72,22,"#fff",2);
       ctx.font="14px system-ui,sans-serif"; ctx.fillText(`${simDays(S).toFixed(2).replace(".",",")} napot bírtál${practice?" (gyakorló)":""}`,W/2,126); ctx.fillText("Koppints vagy nyomd meg a ▲ gombot az újrához",W/2,150); ctx.textAlign="left"; }
     G.raf=requestAnimationFrame(frame);
   }
@@ -1421,10 +1770,10 @@ function drawWave(ctx,w){
 }
 
 /* ---------- indulás ---------- */
-render();
+render(); icoize(document.body);
 setInterval(()=>{ if(route==="home") render(); },3600e3);
 if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
-  addEventListener("load",()=>navigator.serviceWorker.register("sw_v6.js").catch(()=>{}));
+  addEventListener("load",()=>navigator.serviceWorker.register("sw_v7.js").catch(()=>{}));
 }
 </script>
 </body>
