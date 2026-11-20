@@ -1,10 +1,10 @@
-/* Karácsonyi Túlélőközpont – service worker v7
+/* Karácsonyi Túlélőközpont – service worker v8
    Stratégia: az oldal (navigáció) először hálózatról, hiba esetén gyorsítótárból;
    a statikus fájlok (ikonok, Firebase/Leaflet kódok) gyorsítótárból, háttérben frissítve.
    Firestore / Auth hívásokat és a térképcsempéket NEM nyúljuk. */
-const CACHE = 'tk-v7';
+const CACHE = 'tk-v8';
 const PAGE = './index.html';
-const SHELL = ['./', PAGE, './og/main.png', './manifest_v7.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const SHELL = ['./', PAGE, './og/main.png', './manifest_v8.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
