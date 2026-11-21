@@ -241,7 +241,8 @@ header{flex-wrap:wrap}#outbar{flex-basis:100%}
 @media(prefers-reduced-motion:reduce){.fl,.cglow,.hunt.pop{animation:none}}
 .lbx .r{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line)}
 
-/* v10 */
+/* v11 */
+.doors{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.door{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#fff,#eaf3fb);font:700 .95rem system-ui;color:var(--blue);cursor:pointer;position:relative;padding:0}.door.can{background:linear-gradient(#e0932b,#c77a14);color:#fff;border-color:#c77a14;animation:dpulse 1.8s infinite}.door.opened{background:#e8f6ee;color:var(--green);border-color:#bfe3cf}.door.lock{opacity:.45;cursor:default}@keyframes dpulse{50%{box-shadow:0 0 0 4px #e0932b44}}
 .kw{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:2px 0 8px}
 .kw span{background:#fff;border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:.78rem;font-weight:700;color:var(--ice-d,#2c6fa8)}
 .pitch{text-align:center;margin:4px 0 8px}
@@ -749,7 +750,7 @@ function pageContests(b){
 }
 function pageProps(b){
   if(user&&myPart&&!XPV.loaded&&!XPV.tried) loadXp().then(()=>pageName==="props"&&renderPage(true));
-  b.innerHTML=candlesHtml(true)+adventHtml(true)+`<div class="card"><h3>Ajándékfa</h3>${giftTreeSvg()}<p class="mut" style="margin:6px 0 0">${user&&myPart?`Ajándékok a fa alatt: <b>${XPV.st.gifts.length}/8</b>. `:"Belépve gyűjthetsz. "}Keresd a halvány, kattintható ajándékokat az oldalakon: nem mindig és nem mindenhol látszanak.</p></div>`;
+  b.innerHTML=doorsHtml()+candlesHtml(true)+adventHtml(true)+`<div class="card"><h3>Ajándékfa</h3>${giftTreeSvg()}<p class="mut" style="margin:6px 0 0">${user&&myPart?`Ajándékok a fa alatt: <b>${XPV.st.gifts.length}/8</b>. `:"Belépve gyűjthetsz. "}Keresd a halvány, kattintható ajándékokat az oldalakon: nem mindig és nem mindenhol látszanak.</p></div>`;
 }
 function confetti(){
   if(phase()!=="after"||!user||!myPart||!isAlive()) return "";
@@ -1225,6 +1226,22 @@ function wreathSvg(){
     if(st==="lit"||st==="dim"){ const o=st==="lit"?1:.45; g+=`<g opacity="${o}"><ellipse class="cglow" cx="${x}" cy="40" rx="20" ry="22" fill="#ffd36b" opacity=".35"/><path class="fl" d="M${x} 26c-8 9-8 18 0 26 8-8 8-17 0-26z" fill="#ff9d2e"/><path class="fl fl2" d="M${x} 38c-4 5-4 9 0 13 4-4 4-8 0-13z" fill="#ffe27a"/></g>`; } }
   return `<svg viewBox="0 0 340 150" style="width:100%;max-width:420px;display:block;margin:0 auto" role="img" aria-label="Adventi koszorú"><path d="M10 124c60-26 260-26 320 0" fill="none" stroke="#2a9d6f" stroke-width="14" stroke-linecap="round"/><path d="M14 128c60-24 256-24 312 0" fill="none" stroke="#1f7d57" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 9"/><circle cx="170" cy="122" r="5" fill="#d7263d"/><circle cx="100" cy="125" r="4" fill="#d7263d"/><circle cx="240" cy="125" r="4" fill="#d7263d"/>${g}</svg>`;
 }
+const DOORTX=["Első ablak, első nap. A túlélő a csendet is szereti, ma keress egy csendes sarkot.", "Tipp: a fülhallgató a legjobb barátod a plázában. Hangerő fel, ellenség ki.", "A szaloncukrot Magyarországon a 19. század végén kezdték fára akasztani. Légy te is édes.", "Ma ne vállalj hosszú sorállást: minden pénztár mellett hangszóró van.", "Mikulás-készenlét: tegyél tiszta csizmát az ablakba, és ne énekelj hozzá.", "A hóember sosem hallgat Wham!-et, mert elolvadna a meghatottságtól.", "Advent második hete: ha eddig bírtad, rendelj magadnak egy forró csokit.", "Ma figyeld meg, hány boltban szól a tiltott lista. Ne számolj hangosan.", "Tipp: a jó túlélő mindig tudja, hol a legközelebbi biztonságos hely.", "A karácsonyfadísz ma is lehet gömb, de a legjobb a túlélőjelvény.", "Mondd el valakinek, hogy bírod: a közösség erő.", "A rénszarvasok nem csengettyűket hordanak, hanem hangtompítót.", "Gyújts gyertyát este: a lángnak nincs hangja, és ez most jó.", "Ma süss valamit, a konyhai zaj elnyomja a rádiót.", "Tipp: ha megszólal valami gyanús, kezdj el magadban számolni.", "A hóesés lecsendesít mindent. Ez ma a te napod.", "Ha kiestél, nem baj: itt a vígaszág, és a közösség így is számít.", "Ma tegyél egy jót valakivel, aki sosem hallott a játékról.", "Négy nap karácsonyig. A túlélők már szinte látják a célt.", "Tizenkilencedik nap: a fényfüzér világít, te is csillogsz.", "Kapcsolj ki mindent, ami zenél, és nézd a csillagokat.", "Ma tervezz meg egy hangmentes reggelt a hétvégére.", "Még két nap. A legnehezebb mindig az utolsó vásárlás.", "Holnap szenteste: a rádiót ma érdemes lekapcsolni."];
+function doorIcon(d){const k=d%6,c=["#d7263d","#2c6fa8","#2a9d6f","#e0932b","#8e5bd0","#16324f"][k];const o=[`<circle cx="50" cy="55" r="22" fill="${c}"/><rect x="44" y="26" width="12" height="9" fill="#e0932b"/>`,`<path d="M50 20l7 22 23 0-18 13 7 23-19-14-19 14 7-23-18-13 23 0z" fill="#e0932b"/>`,`<g stroke="#2c6fa8" stroke-width="4" stroke-linecap="round"><path d="M50 22v56M26 36l48 28M26 64l48-28"/></g>`,`<path d="M58 78V36q0-14-14-14-12 0-12 10" fill="none" stroke="#d7263d" stroke-width="9" stroke-linecap="round"/><path d="M44 28l12 8M46 48l12 8" stroke="#fff" stroke-width="4"/>`,`<rect x="26" y="44" width="48" height="34" fill="${c}"/><rect x="46" y="44" width="8" height="34" fill="#fff"/><path d="M50 44c-6-14-20-10-14 0M50 44c6-14 20-10 14 0" fill="none" stroke="#fff" stroke-width="4"/>`,`<path d="M30 70q20-50 40 0z" fill="#e0932b"/><circle cx="50" cy="74" r="6" fill="#fff"/>`][k];return `<svg viewBox="0 0 100 100" style="width:90px;height:90px">${o}</svg>`}
+function doorState(d){const n=nowDate(),mo=n.getMonth(),dy=n.getDate();if(n.getFullYear()!==YEAR) return "lock"; if(XPV.loaded&&XPV.st.ev["door"+d]) return "opened"; return (mo===11&&dy>=d)?"can":"lock";}
+function doorsHtml(){
+  const ok=user&&myPart;
+  return `<div class="card"><h3>${ico("gift")} Adventi ablakok</h3><p class="mut" style="margin:0 0 8px">Minden napnak egy ablaka van. Nyisd ki, olvasd el, és kapsz érte XP-t. A kimaradt napokat később is kinyithatod.</p><div class="doors">${Array.from({length:24},(_,i)=>{const d=i+1,st=ok?doorState(d):"lock";return `<button class="door ${st}" data-door="${d}" aria-label="${d}. ablak">${d}</button>`}).join("")}</div></div>`;
+}
+function doorModal(d){
+  if(!(user&&myPart)) return;
+  const st=doorState(d); if(st==="lock") return;
+  const xp=d===24?15:d%6===0?6:3, first=!XPV.st.ev["door"+d];
+  if(first) once("door"+d,xp,d+". ablak");
+  modal(`<div class="grip"></div><div style="text-align:center">${doorIcon(d)}<h3 style="margin:6px 0 4px">${d}. ablak</h3><p style="margin:0 0 8px">${esc(DOORTX[d-1])}</p><p class="mut" style="margin:0">${first?`+${xp} XP`:"Ezt az ablakot már kinyitottad."}</p><button class="wide" id="x" style="margin-top:12px">Bezár</button></div>`);
+  $("#x").onclick=()=>{closeModal(); if(pageName==="props") renderPage(true)};
+}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-door]"); if(b) doorModal(+b.dataset.door)});
 function candlesHtml(always){
   const sts=[0,1,2,3].map(candleState); if(!always&&sts.every(s=>s==="off")&&phase()!=="before") return "";
   const can=sts.indexOf("can"), names=["első","második","harmadik","negyedik"];
@@ -1285,7 +1302,7 @@ const mist=()=>`<svg class="mist" viewBox="0 0 24 24" aria-label="új" role="img
 function isNewTab(id){
   const sn=ls.get("seenTabs",{});
   if(id==="news") return NEWS.some(n=>!ls.get("newsRead",[]).includes(n.id));
-  if(id==="props") return !sn.props||(XPV.loaded&&[0,1,2,3].some(i=>candleState(i)==="can"));
+  if(id==="props") return !sn.props||(XPV.loaded&&([0,1,2,3].some(i=>candleState(i)==="can")||Array.from({length:24},(_,i)=>doorState(i+1)).includes("can")));
   if(id==="contests") return !sn.contests;
   if(id==="profile") return !sn.profile10;
   return false;
@@ -1516,7 +1533,7 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="adatkezeles.html">Adatkezelési tájékoztató</a> · <a href="aszf.html">ÁSZF</a> · <a href="impresszum.html">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v10 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v11 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
