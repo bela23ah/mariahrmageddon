@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Karácsonyi Túlélőközpont</title>
-<meta name="theme-color" content="#dcecf8">
+<meta name="theme-color" content="#dcecf8"><link rel="canonical" href="https://bela23ah.github.io/mariahrmageddon/"><meta name="keywords" content="karácsonyi kihívás, challenge, túlélőközpont, ingyenes program, ünnepek, Mariahrmageddon, Whamageddon, Feliznavidageddon, Kecskemét"><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Karácsonyi Túlélőközpont","url":"https://bela23ah.github.io/mariahrmageddon/","inLanguage":"hu","applicationCategory":"GameApplication","operatingSystem":"Any","isAccessibleForFree":true,"description":"Ingyenes karácsonyi kihívás: Mariahrmageddon, Whamageddon, Feliznavidageddon – három dal, egyetlen cél: ne hallgasd meg őket december 24-ig.","publisher":{"@type":"Organization","name":"Kecskeméti Fiatalok Társasága","url":"https://www.facebook.com/Kaefte"}}</script>
 <meta name="description" content="Mariahrmageddon, Whamageddon, Feliznavidageddon – kiesésbejelentő és statisztika a Kecskeméti Fiatalok Társaságától.">
 <link rel="manifest" href="manifest_v10.webmanifest">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Karácsonyi Túlélőközpont">
@@ -174,9 +174,9 @@ details p{margin:0 0 12px}
 .i[data-f] path{fill:currentColor}
 .i.g{color:var(--grn)}.i.r{color:var(--red)}
 .tile .ico .i{width:1em;height:1em;color:var(--accent,var(--blue))}
-header{align-items:flex-start}
-.brand{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
-.brand b{display:flex;align-items:center;gap:6px;font-size:.98rem}
+header{align-items:center}
+.brand{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;align-self:stretch;gap:6px;flex:1 1 0;min-width:0}#auth{flex:none}
+.brand b{display:flex;align-items:center;gap:8px;font-size:1.2rem;line-height:1.18;white-space:normal}.brand b .i{width:1.25em;height:1.25em}
 #auth{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 button.adm{background:#16324f;border-color:#16324f;color:#fff}
 .medals{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
@@ -241,14 +241,15 @@ header{flex-wrap:wrap}#outbar{flex-basis:100%}
 @media(prefers-reduced-motion:reduce){.fl,.cglow,.hunt.pop{animation:none}}
 .lbx .r{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line)}
 
-/* v11 */
+/* v12 */
+.szb{background:#2c6fa8!important;border-color:#2c6fa8!important;color:#fff!important;font-weight:600}
 .doors{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.door{aspect-ratio:1;border:1px solid var(--line);border-radius:10px;background:linear-gradient(#fff,#eaf3fb);font:700 .95rem system-ui;color:var(--blue);cursor:pointer;position:relative;padding:0}.door.can{background:linear-gradient(#e0932b,#c77a14);color:#fff;border-color:#c77a14;animation:dpulse 1.8s infinite}.door.opened{background:#e8f6ee;color:var(--green);border-color:#bfe3cf}.door.lock{opacity:.45;cursor:default}@keyframes dpulse{50%{box-shadow:0 0 0 4px #e0932b44}}
 .kw{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:2px 0 8px}
 .kw span{background:#fff;border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:.78rem;font-weight:700;color:var(--ice-d,#2c6fa8)}
 .pitch{text-align:center;margin:4px 0 8px}
-.fronts3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.fronts3>div{text-align:center;padding:8px 4px;border-radius:14px;background:#eef6fc;font-size:.78rem;line-height:1.25}
-.fronts3 b{display:block;font-size:.8rem;overflow-wrap:anywhere}
+.fronts3{display:grid;grid-template-columns:1fr;gap:8px}
+.fronts3>div{display:flex;align-items:center;gap:12px;text-align:left;padding:10px 12px;border-radius:14px;background:#eef6fc;font-size:.82rem;line-height:1.25;border-left:5px solid var(--fc)}.fronts3 .fi{flex:none;width:34px;height:34px;border-radius:50%;background:#fff;display:grid;place-items:center;color:var(--fc)}.fronts3 .fi .i{width:20px;height:20px}
+.fronts3 b{display:block;font-size:.95rem;overflow-wrap:normal}.fronts3 em{font-style:normal;color:var(--mut)}
 .links{text-align:center;margin:10px 0 0;font-size:.9rem}.links a{margin:0 8px}
 .xpchip{font-size:.68rem;padding:2px 9px;border-radius:12px;background:#fff;border:1px solid var(--line);color:var(--mut);cursor:pointer}
 .mist{position:absolute;top:4px;right:4px;width:28px;height:28px;transform:rotate(14deg);pointer-events:none;z-index:2}
@@ -330,7 +331,7 @@ const ICONS={
  heart:"M12 20s-8-5-8-11a4.5 4.5 0 018-2.5A4.5 4.5 0 0120 9c0 6-8 11-8 11z",
  heartb:"M12 20s-8-5-8-11a4.5 4.5 0 018-2.5A4.5 4.5 0 0120 9c0 6-8 11-8 11zM12 6.5l-2 4 3 2-1 3.5",
  santa:"M5.5 15h13a2.5 2.5 0 010 5h-13a2.5 2.5 0 010-5zM6.5 15C6.5 9.5 10 5.5 15 4.6M17.5 15C17.5 11 16.8 8 15.4 5.6M19.4 4a2.2 2.2 0 11-4.4 0 2.2 2.2 0 014.4 0z",
- guitar:"M7 21a5 5 0 01-3.5-8.5C5 11 6.5 10.5 8 11c1 .3 1.5 1 2.5 1 1 0 1.5.8 1.3 1.7C11.5 15 12 17 10 19.5A5 5 0 017 21zM11 13l8.5-8.5M17.5 2.5l4 4M7.5 16.5v.01",
+ guitar:"M13.56 10.44C15.32 12.21 15.18 14.19 13.56 14.97C12.42 15.54 13.98 18.22 11.72 20.49C9.74 22.47 7.05 21.48 4.79 19.21C2.52 16.95 1.53 14.26 3.51 12.28C5.78 10.02 8.46 11.58 9.03 10.44C9.81 8.82 11.79 8.68 13.56 10.44zM12.78 9.81L17.52 5.07M14.19 11.22L18.93 6.48M17.23 4.79L18.65 3.37L20.63 5.35L19.21 6.77zM6.82 15.68a1.5 1.5 0 103 0 1.5 1.5 0 10-3 0",
  gamepad:"M6 8h12a4 4 0 014 4v2a3 3 0 01-5.4 1.8L15 14H9l-1.6 1.8A3 3 0 012 14v-2a4 4 0 014-4zM7 11v3M5.5 12.5h3M16 12h.01M18 13.5h.01",
  tools:"M14.5 6.5a4 4 0 00-5 5L3 18l3 3 6.5-6.5a4 4 0 005-5l-2.5 2.5-2.5-.5-.5-2.5z",
  ban:"M12 21a9 9 0 100-18 9 9 0 000 18zM5.6 5.6l12.8 12.8",
@@ -730,7 +731,7 @@ function viewHome(v){
   v.innerHTML=`${confetti()}<div class="hero">${hero}<h1>Karácsonyi Túlélőközpont</h1><p class="count">${line}</p>${landing?`<p class="sub">Ingyenes karácsonyi kihívás az ünnepekre</p>`:""}</div>
   ${landing?`<div class="kw"><span>Karácsonyi kihívás</span><span>Challenge</span><span>Túlélőközpont</span><span>Ingyenes program</span><span>Ünnepek</span></div><p class="pitch">Három híres karácsonyi dal, egyetlen cél: ne hallgasd meg őket december 24-ig. Ingyenes, becsületalapú ünnepi program.</p>`:""}
   <div style="margin:10px 0">${cta}</div>${landing?"":collectiveHtml(true)}<div id="vbanner"></div><div id="inst"></div>
-  <div class="card"><h3>A három front</h3><div class="fronts3">${KEYS.map(k=>`<div>${CH[k].ico}<b>${CH[k].name}</b>${CH[k].song}</div>`).join("")}</div></div>
+  <div class="card"><h3>A három front</h3><div class="fronts3">${KEYS.map(k=>`<div style="--fc:${CH[k].accent}"><span class="fi">${CH[k].ico}</span><span><b>${CH[k].name}</b><em>${CH[k].song}</em></span></div>`).join("")}</div></div>
   <div class="card"><h3>Két játékmód</h3><div class="illus">${IL.modes()}</div></div>
   <div class="card"><h3>Hogyan működik?</h3>
     <ol class="steps"><li><div><b>Regisztrálj</b>, és válassz játékmódot.</div></li><li><div><b>Kerüld a dalokat</b>, bárhol és bármikor.</div></li><li><div><b>Kiestél?</b> Koppints a dal csempéjére, jelentsd, és oszd meg.</div></li></ol></div>
@@ -745,7 +746,8 @@ function bindCollective(b){
   b.querySelector("#tshare")?.addEventListener("click",()=>fbShare(`Melyik település bírja tovább? Add meg a lakóhelyed, és versenyezzünk!\n${SHARE_PAGE("telepulesek.html")}\n\n${MOTTO}`,"#mariahrmageddon",SHARE_PAGE("telepulesek.html")));
 }
 function pageContests(b){
-  b.innerHTML=collectiveHtml(false)+townsHtml(true)+`<div class="card"><h3>Baráti csapatok</h3><p class="mut" style="margin:0 0 8px">A saját csapatod versenyét a Barátok oldalon látod.</p><button class="sm" data-go="teams">Barátok →</button></div>`;
+  if(user&&myPart&&TEAMS==null) loadTeams();
+  b.innerHTML=collectiveHtml(false)+townsHtml(true)+`<div class="card"><h3>${ico("users")} Baráti csapatok</h3>${!user||!myPart?`<p class="mut" style="margin:0 0 8px">Belépve itt látod a csapataid állását.</p>`:TEAMS==null?`<p class="mut">Betöltés…</p>`:TEAMS.length?TEAMS.map(teamMini).join(""):`<p class="mut" style="margin:0 0 8px">Még nem vagy egy csapatban sem.</p>`}<button class="sm" data-go="teams">Barátok és csapatok →</button></div>`;
   bindCollective(b);
 }
 function pageProps(b){
@@ -758,11 +760,11 @@ function confetti(){
   return `<div class="confetti">${Array.from({length:26},(_,i)=>`<i style="left:${(i*37)%100}%;background:${cols[i%5]};animation-delay:${(i%9)*.35}s"></i>`).join("")}</div>`;
 }
 function adventHtml(always){
-  const ph=phase(); if(always&&(ph==="before"||!user||!myPart)) return `<div class="card"><h3>Túlélő naptár</h3><p class="mut" style="margin:0">December 1-jétől itt látod, mely napokat éled túl, és melyiken estél ki.</p></div>`; if(ph==="before"||!user||!myPart) return "";
+  const ph=phase(); if(always&&(ph==="before"||!user||!myPart)) return `<div class="card"><h3>Túlélt napjaim</h3><p class="mut" style="margin:0">December 1-jétől itt látod, hogy a játék mely napjait éled túl, és melyiken estél ki.</p></div>`; if(ph==="before"||!user||!myPart) return "";
   const n=nowDate(), b=bounds(), cur=ph==="after"?25:Math.floor((n-b.start)/DAY)+1, out={};
   myElims().forEach(e=>{ const d=e.occurredAt?.toDate?.(); if(d&&d.getMonth()===11) out[d.getDate()]=1; });
   let h=""; for(let i=1;i<=24;i++) h+=`<span class="${out[i]?"t":i<=cur?"p":""}${i===cur?" c":""}">${out[i]?ico("skull"):i}</span>`;
-  return `<div class="card"><h3>Túlélő naptár</h3><div class="advent">${h}</div><div class="mut">Zöld: túlélt nap · piros: kiesés napja</div></div>`;
+  return `<div class="card"><h3>Túlélt napjaim</h3><div class="advent">${h}</div><div class="mut">Zöld: túlélt nap · piros: kiesés napja</div></div>`;
 }
 const GOAL=10;
 function topTownLine(){
@@ -771,8 +773,8 @@ function topTownLine(){
 }
 function collectiveHtml(compact){
   const ph=phase();
-  if(compact&&(!COLL||!COLL.reg)) return `<div class="card"><h3>${ico("globe")} Össznépi cél</h3><p class="mut" style="margin:0">Ha a regisztráltak ${GOAL}%-a túléli a Mariahrmageddont, legyőztük. Az állás hamarosan itt látszik.</p></div>`;
-  if(!COLL||!COLL.reg) return `<div class="card"><h3>🌍 Össznépi cél</h3><p class="mut" style="margin:0">Ha a regisztráltak legalább ${GOAL}%-a túléli a Mariahrmageddont, kollektíve legyőzzük! Minél többen indulunk, annál jobb. Az állás hamarosan itt látszik.</p></div>`;
+  if(compact&&(!COLL||!COLL.reg)) return `<div class="card"><h3>${ico("globe")} Össznépi cél</h3><p class="mut" style="margin:0">Ha a regisztráltak legalább ${GOAL}%-a karácsonyig bent marad, kollektíve túléltük. Az állás hamarosan itt látszik.</p></div>`;
+  if(!COLL||!COLL.reg) return `<div class="card"><h3>🌍 Össznépi cél</h3><p class="mut" style="margin:0">Ha a regisztráltak legalább ${GOAL}%-a karácsonyig bent marad, kollektíve túléltük. Az állás hamarosan itt látszik.</p></div>`;
   const reg=COLL.reg, alive=COLL.alive, pct=alive/reg*100, ok=pct>=GOAL, need=Math.max(0,Math.ceil((GOAL/100*reg-alive)/(1-GOAL/100)));
   if(compact) return `<div class="card" data-go="contests" style="cursor:pointer"><h3>${ico("globe")} Össznépi cél</h3><div class="cbar"><i class="ca" style="width:${pct.toFixed(2)}%"></i><i class="co" style="width:${(100-pct).toFixed(2)}%"></i></div><div class="row" style="margin:6px 0"><span>Bent van: <b>${alive}</b> (${pct.toFixed(1).replace(".",",")}%)</span><span>Kiesett: <b>${reg-alive}</b></span></div>${topTownLine()}<p class="mut" style="margin:0">A cél: a regisztráltak ${GOAL}%-a túléli karácsonyig. <a class="lnk" data-go="contests">Versenyek →</a></p></div>`;
   let verdict;
@@ -780,8 +782,8 @@ function collectiveHtml(compact){
   else if(ph==="before") verdict=`<div class="mut">Eddig ${reg} regisztrált. Minél többen indulunk, annál nagyobb az esélyünk!</div>`;
   else verdict=ok?`<div class="verdict good">✅ A cél felett vagyunk – tartsuk így!</div>`:`<div class="verdict warn">⚠️ A cél alatt vagyunk! Kb. ${need} új meghívott kellene a felhúzásunkhoz.</div>`;
   return `<div class="card"><h3>🌍 Össznépi cél: a Mariahrmageddon legyőzése</h3>
-  <p class="mut" style="margin:0 0 8px">Ha a regisztráltak legalább <b>${GOAL}%-a</b> karácsonyig bent marad, kollektíve túléltük. Dec. 24-ig bármikor kicsúszhatunk alóla, de az új meghívottak felhúzhatnak minket.</p>
-  <div class="mut" style="margin:-4px 0 8px">Csak a <b>Mariahrmageddon</b> kiesései számítanak – a Wham és a Feliz kiegészítő kihívás, nem csökkenti a közös állást.</div><div class="cbar"><i class="ca" style="width:${pct.toFixed(2)}%"></i><i class="co" style="width:${(100-pct).toFixed(2)}%"></i><span class="goal" style="left:${GOAL}%"><em>${GOAL}% cél</em></span></div>
+  <p class="mut" style="margin:0 0 8px">Ha a regisztráltak legalább ${GOAL}%-a karácsonyig bent marad, kollektíve túléltük. December 24-ig bármikor kicsúszhatunk, de az új meghívottak megmenthetnek mindenkit.</p>
+  <div class="mut" style="margin:-4px 0 8px">Csak a Mariahrmageddon kiesései számítanak.</div><div class="cbar"><i class="ca" style="width:${pct.toFixed(2)}%"></i><i class="co" style="width:${(100-pct).toFixed(2)}%"></i><span class="goal" style="left:${GOAL}%"><em>${GOAL}% cél</em></span></div>
   <div class="row" style="margin:6px 0"><span>🟢 Bent van: <b>${alive}</b> (${pct.toFixed(1).replace(".",",")}%)</span><span>🔴 Kiesett: <b>${reg-alive}</b></span></div>
   ${verdict}${ph!=="after"?`<button class="sm pri" id="cinv" style="margin-top:8px">👥 Hívj meg még valakit!</button> `:""}<button class="sm" id="cshare" style="margin-top:8px">📘 Megosztás</button> <button class="sm" id="tshare" style="margin-top:8px">🏘️ Települések versenye</button>
   <p class="mut" style="margin:8px 0 0;font-size:.8rem">Állapot: ${stamp(COLL.t)} (néhány percenként frissül)</p></div>`;
@@ -791,7 +793,7 @@ function townsHtml(full,src){
   const all=towns.slice().sort((a,b)=>v(b)-v(a)||(v(b)/b.n)-(v(a)/a.n)||b.n-a.n), list=full?all:all.slice(0,1), mx=Math.max(1,...all.map(v));
   const rows=list.map((t,i)=>`<div class="tw"><div class="t1"><span>${i+1}. ${esc(t.l)}</span><em>${v(t)} bent · ${v(t)}/${t.n} (${Math.round(v(t)/t.n*100)}%)</em></div><div class="trk"><i style="width:${Math.max(2,v(t)/mx*100)}%"></i></div></div>`).join("");
   return `<div class="card"><h3>🏘️ Települések versenye</h3><div class="row" style="gap:6px;margin:0 0 8px"><button class="sm ${sc==="mariah"?"pri":""}" data-tsc="mariah">Csak Mariah</button><button class="sm ${sc==="all"?"pri":""}" data-tsc="all">Mindhárom</button></div>${list.length?rows:`<p class="mut" style="margin:0">Itt látszik majd, melyik településről élik túl a legtöbben. Adj meg lakóhelyet a Profilodban!</p>`}
-  <p class="mut" style="margin:6px 0 0">Az számít, hányan élték túl az adott településről (ezért érdemes sokaknak jelentkezni); mellette az arány: nem mindegy, hogy 1/10 vagy 1/1 maradt bent.${sc==="all"?" Mindhárom: kiesett, aki a Feliz-fronton is kiesett (hagyományos), vagy bármelyiken (Die Hard).":""}</p>${full?"":`<p style="margin:6px 0 0"><a class="lnk" data-go="contests">Az összes település →</a></p>`}</div>`;
+  <p class="mut" style="margin:6px 0 0">Az számít, hányan élték túl az adott településről (ezért érdemes sokaknak jelentkezni); mellette az arány.</p>${full?"":`<p style="margin:6px 0 0"><a class="lnk" data-go="contests">Az összes település →</a></p>`}</div>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tsc]"); if(b){ ls.set("townScope",b.dataset.tsc); render(); }});
 const MED=["#8cc3ea","#2c6fa8","#2a9d6f","#16324f","#e0932b"];
@@ -955,7 +957,7 @@ function viewMap(v){
   <p class="sub">Hol estek ki a játékosok (településenként összesítve, kb. 1 km-es pontossággal), és mely helyeket érdemes elkerülni.</p>
   <div class="row" style="margin-bottom:6px"><div>
     <label class="pill"><input type="checkbox" id="lEl" ${showElim?"checked":""}> 🔴 Kiesések</label><label class="pill"><input type="checkbox" id="lDz" ${showDanger?"checked":""}> 🚨 Veszélyzónák</label><label class="pill"><input type="checkbox" id="lSu" ${showSusp?"checked":""}> ⚠️ Feltételezett</label><label class="pill"><input type="checkbox" id="lSf" ${showSafe?"checked":""}> 🛡️ Biztonságos helyek</label></div>
-    <div><button class="warn sm" id="addDz">⚠️ Kerülendő hely jelzése</button> <button class="sm" id="addSz">🛡️ Biztonságos hely</button></div></div>
+    <div><button class="warn sm" id="addDz">⚠️ Kerülendő hely jelzése</button> <button class="sm szb" id="addSz">🛡️ Biztonságos hely</button></div></div>
   <div class="chips" id="mchips"><button class="chip ${mapFilter==="all"?"sel":""}" data-f="all">Mind</button>${KEYS.map(k=>`<button class="chip ${mapFilter===k?"sel":""}" data-f="${k}">${CH[k].ico} ${CH[k].short}</button>`).join("")}</div>
   <div id="map"></div><div class="mut" style="margin-top:6px">Piros, tömör kör: <b>veszélyzóna</b> – itt már kiesett valaki. Szaggatott, borostyán kör: <b>feltételezett</b> kerülendő hely (hallótávolsággal). Kék pajzs: <b>biztonságos hely</b> – itt nem játsszák a dalokat.</div><div class="mut" id="mupd" style="margin-top:6px"></div><div id="merr" class="err"></div>`;
   v.querySelectorAll("#mchips .chip").forEach(b=>b.onclick=()=>{mapFilter=b.dataset.f;v.querySelectorAll("#mchips .chip").forEach(x=>x.classList.toggle("sel",x===b));refreshMarkers()});
@@ -1147,7 +1149,6 @@ function plusSheet(){
     ${mt2("minigame","🎮","Mini játék","Fülvédő futam")}
     ${mt2("songs","🎧","Dalok","Az ellenfelek")}
     ${mt2("tips","🛡️","Túlélési tippek","Kerülendő és biztonságos helyek")}
-    ${mt2("safe","🛡️","Biztonságos hely","Mariah-mentes zóna")}
     ${mt2("news","📢","Közlemények",NEWS.length?NEWS.length+" üzenet":"Nincs új")}
     ${mt2("profile","👤","Profilom",user?esc(userDoc?.nick||""):"Belépés")}
     ${mt2("install","📲","Telepítés","Főképernyőre")}
@@ -1163,7 +1164,7 @@ function plusSheet(){
 
 /* ---------- XP, kitűzők, ajándékkereső, adventi gyertyák ----------
    Becsületalapú, mint a ranglista: a kliens írja a saját games/{év}/xp/{uid} dokumentumát (nincs plusz élő figyelő: munkamenetenként 1 olvasás). */
-const LEVELS=[[0,"Hópehely"],[40,"Hóember"],[120,"Rénszarvas"],[250,"Manó"],[450,"Télapó"],[700,"Díszes fenyő"]];
+const LEVELS=[[0,"Hópehely"],[40,"Hóember"],[120,"Rénszarvas"],[250,"Manó"],[450,"Télapó"],[700,"Díszes fenyő"],[900,"Grincs"],[1150,"Kevin"],[1500,"John McClane"]];
 const GIFTS=[["Kis csomag",'<rect x="5" y="10" width="14" height="10" rx="1.5"/><path d="M12 10v10M5 14h14M12 10c-2-4-5-3-4 0M12 10c2-4 5-3 4 0"/>'],["Nagy csomag",'<rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 12h18M12 8v13M12 8c-3-5-7-3-5 0M12 8c3-5 7-3 5 0"/>'],["Maci",'<circle cx="12" cy="13" r="6"/><circle cx="7" cy="6.5" r="2.2"/><circle cx="17" cy="6.5" r="2.2"/><circle cx="10" cy="12" r=".6"/><circle cx="14" cy="12" r=".6"/><path d="M10.5 15c1 .8 2 .8 3 0"/>'],["Labda",'<circle cx="12" cy="12" r="8"/><path d="M4.5 9.5c5 2 10 2 15 0M4.5 14.5c5-2 10-2 15 0M12 4v16"/>'],["Fenydísz",'<circle cx="12" cy="14" r="6.5"/><path d="M10 7.5h4V5.5h-4zM8 12c3 2 5 2 8 0"/>'],["Mézeskalács",'<circle cx="12" cy="5.5" r="2.5"/><path d="M9.5 9L4 10.5 5 13l4.500-1L9 17l-2 4h3l2-3 2 3h3l-2-4-.5-5 4.500 1L20 10.500 14.500 9z"/>'],["Vonat",'<rect x="3" y="9" width="12" height="8" rx="1.5"/><path d="M15 12h4l2 5H15M6 9V5h4v4"/><circle cx="7" cy="19" r="1.7"/><circle cx="13" cy="19" r="1.7"/><circle cx="18" cy="19" r="1.7"/>'],["Csengő",'<path d="M6 17c1-2 1-4 1-7a5 5 0 0110 0c0 3 0 5 1 7zM10 20a2 2 0 004 0M12 5V3"/>']];
 const giftSvg=(i,cls)=>`<svg class="${cls||"i"}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${GIFTS[i][1]}</svg>`;
 const XPV={xp:0,st:{ev:{},days:[],gifts:[],gd:{},hats:[],candles:[],gx:{},inv:0,bs:0,ps:[0,""]},loaded:false,loading:false,lb:null,lbT:0,timer:0};
@@ -1231,7 +1232,7 @@ function doorIcon(d){const k=d%6,c=["#d7263d","#2c6fa8","#2a9d6f","#e0932b","#8e
 function doorState(d){const n=nowDate(),mo=n.getMonth(),dy=n.getDate();if(n.getFullYear()!==YEAR) return "lock"; if(XPV.loaded&&XPV.st.ev["door"+d]) return "opened"; return (mo===11&&dy>=d)?"can":"lock";}
 function doorsHtml(){
   const ok=user&&myPart;
-  return `<div class="card"><h3>${ico("gift")} Adventi ablakok</h3><p class="mut" style="margin:0 0 8px">Minden napnak egy ablaka van. Nyisd ki, olvasd el, és kapsz érte XP-t. A kimaradt napokat később is kinyithatod.</p><div class="doors">${Array.from({length:24},(_,i)=>{const d=i+1,st=ok?doorState(d):"lock";return `<button class="door ${st}" data-door="${d}" aria-label="${d}. ablak">${d}</button>`}).join("")}</div></div>`;
+  return `<div class="card"><h3>${ico("gift")} Adventi ablakok</h3><p class="mut" style="margin:0 0 8px">Minden napnak egy ablaka van. Nyisd ki, olvasd el, és kapsz érte XP-t. A kimaradt napokat később is kinyithatod. A zöld ablak szövegét bármikor újra elolvashatod, ha rákoppintasz.</p><div class="doors">${Array.from({length:24},(_,i)=>{const d=i+1,st=ok?doorState(d):"lock";return `<button class="door ${st}" data-door="${d}" aria-label="${d}. ablak">${d}</button>`}).join("")}</div></div>`;
 }
 function doorModal(d){
   if(!(user&&myPart)) return;
@@ -1460,7 +1461,7 @@ function pageSongs(b){
   bindHeard(b);
 }
 function pageTips(b){
-  b.innerHTML=TIPS.map(([t,d],i)=>`<div class="card"><b>${i+1}. ${esc(t)}</b><p class="mut" style="margin:2px 0 0">${esc(d)}</p></div>`).join("")+`<button class="warn wide" id="qd">⚠️ Kerülendő hely jelzése</button><button class="wide" style="margin-top:8px" data-go="safe">🛡️ Biztonságos helyek</button>`;
+  b.innerHTML=TIPS.map(([t,d],i)=>`<div class="card"><b>${i+1}. ${esc(t)}</b><p class="mut" style="margin:2px 0 0">${esc(d)}</p></div>`).join("")+`<button class="warn wide" id="qd">⚠️ Kerülendő hely jelzése</button><button class="wide szb" style="margin-top:8px" data-go="safe">🛡️ Biztonságos helyek</button>`;
   $("#qd").onclick=()=>{closePage();user&&myPart?dangerModal():loginModal()};
 }
 
@@ -1533,7 +1534,7 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="adatkezeles.html">Adatkezelési tájékoztató</a> · <a href="aszf.html">ÁSZF</a> · <a href="impresszum.html">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v11 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v12 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
@@ -1974,7 +1975,7 @@ async function syncMyTeamEntries(){
 async function createTeam(name,scope){
   if((TEAMS||[]).length>=5) throw new Error("Legfeljebb 5 csapatnak lehetsz tagja.");
   const code=newCode();
-  await setDoc(doc(db,"teams",code),{name,scope:scope==="all"?"all":"mariah",year:YEAR,owner:user.uid,memberIds:[user.uid],members:{[user.uid]:myEntry()},createdAt:serverTimestamp()});
+  await setDoc(doc(db,"teams",code),{name,scope:scope==="all"?"all":"mariah",year:YEAR,owner:user.uid,ownerNick:(userDoc?.nick||""),memberIds:[user.uid],members:{[user.uid]:myEntry()},createdAt:serverTimestamp()});
   await loadTeams(true); once("tc",15,"csapat létrehozása"); return code;
 }
 async function joinTeam(code){
@@ -2019,6 +2020,11 @@ function teamCard(t){
   return `<div class="card"><div class="row"><b>${esc(t.name)}</b><span class="mut">kód: <b>${esc(t.id)}</b></span></div><p class="mut" style="margin:2px 0 6px">Versenyszám: <b>${SCOPE_TXT[t.scope||"all"]}</b></p>
   <div class="feed">${rows.map((r,i)=>`<div class="row"><div>${i+1}. <b>${esc(r.m.nick)}</b>${r.uid===user.uid?" (te)":""}<div class="mut">${r.st.days.toFixed(1).replace(".",",")} nap · ${r.st.alive?"még bent":"kiesett"}</div></div><div>${KEYS.map(k=>`<span class="tag ${r.m.outs?.[k]?"dead":"alive"}" title="${CH[k].name}">${CH[k].short.charAt(0)}${r.m.outs?.[k]?" ✕":" ✓"}</span>`).join(" ")}</div></div>`).join("")}</div>
   <div class="row" style="margin-top:10px"><button class="sm pri" data-invite="${esc(t.id)}">📤 Meghívó</button><button class="sm" data-leave="${esc(t.id)}">Kilépés</button></div></div>`;
+}
+function teamMini(t){
+  const rows=Object.entries(t.members||{}).map(([uid,m])=>({uid,m,st:memberStat(m,t.scope||"all")})).sort((a,c)=>a.st.alive!==c.st.alive?(a.st.alive?-1:1):a.st.alive?(a.st.outsN-c.st.outsN):(c.st.days-a.st.days));
+  const alive=rows.filter(r=>r.st.alive).length;
+  return `<div style="margin:0 0 10px"><div class="row"><b>${esc(t.name)}</b><span class="mut">${rows.length} tag · ${alive} bent</span></div><div class="mut" style="margin:0 0 4px">${SCOPE_TXT[t.scope||"all"]}</div>${rows.slice(0,3).map((r,i)=>`<div class="row"><span>${i+1}. <b>${esc(r.m.nick)}</b>${r.uid===user.uid?" (te)":""}</span><span class="mut">${r.st.alive?"bent":"kiesett"} · ${r.st.days.toFixed(1).replace(".",",")} nap</span></div>`).join("")}</div>`;
 }
 function pageTeams(b){
   if(!user||!myPart){ b.innerHTML=`<div class="card"><p>A csapatokhoz előbb lépj be, és állítsd be a játékmódodat.</p><button class="pri" id="tl">Tovább</button></div>`; $("#tl").onclick=()=>{closePage();user?onboarding():loginModal()}; return }
