@@ -2,7 +2,7 @@
    Stratégia: az oldal (navigáció) először hálózatról, hiba esetén gyorsítótárból;
    a statikus fájlok (ikonok, Firebase/Leaflet kódok) gyorsítótárból, háttérben frissítve.
    Firestore / Auth hívásokat és a térképcsempéket NEM nyúljuk. */
-const CACHE = 'tk-v10.3';
+const CACHE = 'tk-v10.4';
 const PAGE = './index.html';
 const SHELL = ['./', PAGE, './og/main.png', './manifest_v10.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
