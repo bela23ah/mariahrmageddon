@@ -622,7 +622,7 @@ const auth = getAuth(app);
 try{ setPersistence(auth, ls.get("keepIn",true)?browserLocalPersistence:browserSessionPersistence).catch(()=>{}); }catch(e){}
 let db; try{ db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }catch(e){ db=getFirestore(app); }
 
-let user=null, userDoc=null, userLoaded=false, myPart=null, mineReady=false, isAdmin=false, statsPublic=false, onboardFor=null;
+let user=null, userDoc=null, userLoaded=false, myPart=null, mineReady=false, isAdmin=false, statsPublic=false, mapScope="hu", statsScope="hu", onboardFor=null;
 let elimsReady=false, elims=[], subs=[], rem=null, remLoaded=false, TEAMS=null, teamsLoading=false;
 let route=ls.get("route0",null)||"home", pageName=null, mapFilter="all", firstAuth=true;
 const AD={loaded:false,loading:false,t:0,parts:[],elims:[],dangers:[],users:[]};
@@ -634,7 +634,7 @@ async function cachedDoc(name,ttl){
   try{ const s=await getDoc(doc(db,"config",name)); const d=s.exists()?s.data():null; ls.set(k,{t:Date.now(),d}); return d; }
   catch(e){ return c?c.d:null; }
 }
-async function loadConfig(){ const c=await cachedDoc("public",5*60e3); statsPublic=!!(c&&c.statsPublic); if(c&&Array.isArray(c.doors)&&c.doors.length===24) DOORTX=c.doors.map(x=>String(x||"")); render(); loadNews(c&&c.newsV); }
+async function loadConfig(){ const c=await cachedDoc("public",5*60e3); statsPublic=!!(c&&c.statsPublic); mapScope=c&&c.mapScope==="world"?"world":"hu"; statsScope=c&&c.statsScope==="world"?"world":"hu"; if(c&&Array.isArray(c.doors)&&c.doors.length===24) DOORTX=c.doors.map(x=>String(x||"")); render(); loadNews(c&&c.newsV); }
 loadConfig();
 let COLL=null;
 async function loadCollective(){ const d=await cachedDoc("collective",5*60e3); COLL=d&&d.year===YEAR?d:null; render(); }
@@ -753,7 +753,7 @@ addEventListener("popstate",()=>{ if(pageName){stopGame();pageName=null;$("#page
 
 
 function cdText(){ const ms=bounds().start-nowDate(); if(ms<=0) return ""; const t=Math.floor(ms/1000),p=n=>String(n).padStart(2,"0"),d=Math.floor(t/86400); return `${d}${L(" nap ","d ")}${p(Math.floor(t%86400/3600))}:${p(Math.floor(t%3600/60))}:${p(t%60)}`; }
-function cdHtml(){ if(phase()!=="before") return ""; return `<div class="cdbox"><span>${L("A kihívás indulásáig ennyi idő van hátra:","Time remaining until the challenge begins:")}</span><b data-cd>${cdText()}</b></div>`; }
+function cdHtml(){ if(phase()!=="before") return ""; return `<div class="cdbox"><span>${L("⏳ Indul a játék – ekkor jelenik meg a „Sajnos kiestem” gomb:","⏳ The game starts – this is when the “I'm out” button appears:")}</span><b data-cd>${cdText()}</b></div>`; }
 setInterval(()=>{ document.querySelectorAll("[data-cd]").forEach(e=>{ const t=cdText(); if(e.textContent!==t) e.textContent=t }) },1000);
 const shareShort=(k)=>L("🎄 Karácsonyi túlélőkihívás: december 1-től kerüld el Mariah, Wham! és Feliz dalát, és versenyezzünk, ki éli túl! 😈 #Mariahrmageddon #Whamageddon","🎄 Christmas survival challenge: from December 1 dodge Mariah, Wham! and Feliz, and let's see who survives! 😈 #Mariahrmageddon #Whamageddon");
 function shareRow(text,url,short){ const t=encodeURIComponent(short||shareShort()), u=encodeURIComponent(url), tt=encodeURIComponent(text);
@@ -813,7 +813,7 @@ function bindCollective(b){
 }
 function pageContests(b){
   if(user&&myPart&&TEAMS==null) loadTeams();
-  b.innerHTML=collectiveHtml(false)+townsHtml(true)+`<div class="card"><h3>${ico("users")} Baráti csapatok</h3>${!user||!myPart?`<p class="mut" style="margin:0 0 8px">Belépve itt látod a csapataid állását.</p>`:TEAMS==null?`<p class="mut">Betöltés…</p>`:TEAMS.length?TEAMS.map(teamMini).join(""):`<p class="mut" style="margin:0 0 8px">Még nem vagy egy csapatban sem.</p>`}<button class="sm" data-go="teams">Barátok és csapatok →</button></div>`;
+  b.innerHTML=collectiveHtml(false)+townsHtml(true)+(COLL&&COLL.countries&&COLL.countries.length>1?`<h2>${L('Országok versenye','Countries contest')}</h2>${countriesBars([...COLL.countries].sort((x,y)=>y.a-x.a||y.n-x.n),true)}`:'')+`<div class="card"><h3>${ico("users")} Baráti csapatok</h3>${!user||!myPart?`<p class="mut" style="margin:0 0 8px">Belépve itt látod a csapataid állását.</p>`:TEAMS==null?`<p class="mut">Betöltés…</p>`:TEAMS.length?TEAMS.map(teamMini).join(""):`<p class="mut" style="margin:0 0 8px">Még nem vagy egy csapatban sem.</p>`}<button class="sm" data-go="teams">Barátok és csapatok →</button></div>`;
   bindCollective(b);
 }
 function pageProps(b){
@@ -972,7 +972,7 @@ function rulesHtml(){return `
   <div class="card"><h3>Szlengszótár</h3><p class="mut" style="margin:0 0 6px">Ezeket a kifejezéseket nem fordítjuk, így él a nemzetközi játékban:</p><p style="margin:0"><b>Wham'd</b> – elkapott a Last Christmas.<br><b>Carey'd Away</b> – elkapott Mariah.<br><b>Whamhalla</b> – a kiesettek mennyországa; a barátaidat tilos direkt oda küldeni.<br><b>un-Whamly</b> – a játék szellemével ellentétes, szemét viselkedés.</p></div>
   <div class="card"><h3>Játékmódok</h3>
    <p><b>🎄 Hagyományos (vígaszági):</b> a Mariahrmageddonnal indulsz. Ha kiestél, vígaszágon a <b>Whamageddonban</b> maradhatsz bent („Last Christmas”). Ha abból is kiestél, jön a <b>Feliznavidageddon</b>. A többi szabály változatlan.</p>
-   <p><b>🔥 Die Hard:</b> mindhárom fronton egyszerre indulsz, és mindegyiken külön esel ki.</p></div>
+   <p><b>🔥 Die Hard:</b> ${L("mindhárom fronton egyszerre játszol, a sorrend nem számít. Ha meghallasz egy dalt, csak az adott geddonból esel ki, a másik kettőben tovább játszol.","you play all three fronts at once, the order does not matter. If you hear a song you are out of that geddon only; you keep playing in the other two.")}</p></div>
   <div class="card"><h3>▶ Szabálymagyarázó videó</h3><p class="mut" style="margin:0 0 8px">Ha inkább megnéznéd, mint elolvasnád:</p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">Megnyitás Facebookon</a><p class="mut" style="margin:10px 0 0">${esc(MOTTO)}</p></div>`}
 const FAQ=[
  ["Elég, ha nem hallgatom meg a dalt?","Nem elég: a cél az, hogy véletlenül se halld meg. Fülhallgató, némított videók, óvatos bevásárlás – kerüld el!"],
@@ -1575,7 +1575,7 @@ function pageProfile(b){
   ${myPart.mode==="classic"?(noElim?`<button class="sm" id="todh">Váltás Die Hard módra</button><p class="mut">Csak addig lehetséges, amíg nem estél ki sehol.</p>`:`<p class="mut">Kiesés után a mód már nem váltható.</p>`):""}
   <label class="chk" style="margin-top:10px"><input type="checkbox" id="pub" ${myPart.publicProfile?"checked":""}> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
   <label class="chk"><input type="checkbox" id="remt" ${rem?.optIn?"checked":""}> <span>📧 „Élsz még?” e-mail emlékeztető, ha 3 napig nem lépek be</span></label><label class="chk"><input type="checkbox" id="nwt" ${ls.get("newsOff",false)?"":"checked"}> <span>📢 Felugró közlemények mutatása</span></label><div class="err" id="perr"></div></div>
-  <div class="card"><h3>🏘️ Lakóhely</h3><p class="mut" style="margin:0 0 6px">A települések versenyében számítunk (csak összesítve látszik, a neved nem).</p><input id="homep" list="clh2" maxlength="60" value="${esc(myPart.home||"")}" placeholder="pl. Kecskemét"><datalist id="clh2">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist><button class="sm" id="homes">Mentés</button></div>
+  <div class="card"><h3>🏘️ Lakóhely</h3><p class="mut" style="margin:0 0 6px">A települések versenyében számítunk (csak összesítve látszik, a neved nem).</p><input id="homep" list="clh2" maxlength="60" value="${esc(myPart.home||"")}" placeholder="pl. Kecskemét"><datalist id="clh2">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist><label style="margin-top:6px">${L("Ország","Country")}</label><select id="homec2">${countryOptions(myPart.country||"")}</select><button class="sm" id="homes">Mentés</button></div>
   <div class="card"><button class="wide" id="lo">Kilépés</button></div>
   <div class="card"><h3>Adataim</h3><p class="mut">Ha törlöd a fiókodat, a profilod, a részvételeid, a kiesés-bejelentéseid, a ranglista-eredményed és az emlékeztető-beállításod végleg törlődik, és kilépsz a csapatokból.</p><button class="wide" id="del" style="color:var(--red)">Fiókom és adataim törlése</button></div>`;
   bindXp(b);
@@ -1585,7 +1585,7 @@ function pageProfile(b){
   $("#pub").onchange=async e=>{ try{ await updateDoc(doc(db,"participations",myPart.id),{publicProfile:e.target.checked,nick:e.target.checked?userDoc.nick:"Rejtőzködő túlélő"}) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
   $("#nwt").onchange=e=>ls.set("newsOff",!e.target.checked);
   $("#remt").onchange=async e=>{ try{ await setReminder(e.target.checked) }catch(err){$("#perr").textContent=msg(err);e.target.checked=!e.target.checked} };
-  $("#homes").onclick=async()=>{ try{ await updateDoc(doc(db,"participations",myPart.id),{home:$("#homep").value.trim().slice(0,60)}); $("#homes").textContent="Mentve ✓" }catch(err){$("#perr").textContent=msg(err)} };
+  $("#homes").onclick=async()=>{ try{ { const cc=$("#homec2").value; await updateDoc(doc(db,"participations",myPart.id),{home:$("#homep").value.trim().slice(0,60),country:cc&&cc!=="HU"?cc:deleteField()}); } $("#homes").textContent="Mentve ✓" }catch(err){$("#perr").textContent=msg(err)} };
   $("#lo").onclick=async()=>{await signOut(auth);closePage()};
   $("#del").onclick=deleteAccount;
 }
@@ -1630,56 +1630,67 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="adatkezeles.html">Adatkezelési tájékoztató</a> · <a href="aszf.html">ÁSZF</a> · <a href="impresszum.html">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v15 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v16 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
 const nameOf = uid => AD.users.find(u=>u.id===uid)?.nick || AD.parts.find(p=>p.uid===uid)?.nick || "Játékos";
 const topN=(m,n)=>Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n).map(([l,c])=>({l,n:c}));
-function summarize(){
+
+const COUNTRIES=["AT","AU","BE","BG","BR","CA","CH","CN","CZ","DE","DK","EE","ES","FI","FR","GB","GR","HR","IE","IL","IN","IT","JP","KR","LT","LV","MX","NL","NO","NZ","PL","PT","RO","RS","SE","SI","SK","TR","UA","US","ZA","AE","AR","CL","CO","PH","SG","TH","ZZ"];
+const CC_CENTER={AT:[47.5,14.5],AU:[-25.3,133.8],BE:[50.6,4.6],BG:[42.7,25.5],BR:[-10,-52],CA:[56,-96],CH:[46.8,8.2],CN:[35,103],CZ:[49.8,15.5],DE:[51.2,10.4],DK:[56,9.5],EE:[58.7,25.5],ES:[40.2,-3.7],FI:[64,26],FR:[46.6,2.4],GB:[54,-2.5],GR:[39,22],HR:[45.2,15.5],IE:[53.2,-8],IL:[31.5,34.9],IN:[21,78],IT:[42.8,12.5],JP:[36,138],KR:[36.5,127.8],LT:[55.3,23.9],LV:[56.9,24.9],MX:[23.6,-102.5],NL:[52.2,5.5],NO:[61,9],NZ:[-41,174],PL:[52,19.4],PT:[39.6,-8],RO:[45.9,25],RS:[44,21],SE:[62,15],SI:[46.1,14.8],SK:[48.7,19.7],TR:[39,35],UA:[49,31.5],US:[39.5,-98.5],ZA:[-29,24],AE:[24,54],AR:[-34,-64],CL:[-35.7,-71.5],CO:[4.6,-74],PH:[12.9,121.8],SG:[1.35,103.8],TH:[15.9,100.9]};
+const cname=c=>{ if(c==="HU") return L("Magyarország","Hungary"); if(c==="ZZ") return L("Más ország","Other country"); try{ return new Intl.DisplayNames([LANG],{type:"region"}).of(c)||c }catch{ return c } };
+const ccCoords=c=>c&&c!=="HU"&&CC_CENTER[c]?{lat:CC_CENTER[c][0],lng:CC_CENTER[c][1]}:null;
+const countryOptions=sel=>`<option value="">${cname("HU")}</option>`+COUNTRIES.map(c=>[c,cname(c)]).sort((a,b)=>a[0]==="ZZ"?1:b[0]==="ZZ"?-1:a[1].localeCompare(b[1],LANG)).map(([c,n])=>`<option value="${c}" ${sel===c?"selected":""}>${esc(n)}</option>`).join("");
+function scoped(scope){ const PC={}; AD.parts.forEach(p=>PC[p.uid]=p.country||"HU"); const ok=u=>scope==="world"||(PC[u]||"HU")==="HU";
+  return {PC,parts:AD.parts.filter(p=>ok(p.uid)),elims:AD.elims.filter(e=>ok(e.uid)),dangers:AD.dangers.filter(d=>ok(d.uid)),safes:(AD.safes||[]).filter(z=>ok(z.uid))}; }
+function countryStats(X,out){ const m={}; X.parts.forEach(p=>{ const c=p.country||"HU"; const o=(m[c]??={c,n:0,a:0}); o.n++; if(!out.has(p.uid)) o.a++; }); return Object.values(m).sort((a,b)=>b.n-a.n).slice(0,40); }
+const countriesBars=(arr,ratio)=>arr&&arr.length>1?`<div class="card">${arr.map(r=>`<div class="bar"><span class="l">${esc(cname(r.c))}</span><i style="width:${Math.max(2,(ratio?r.a/Math.max(1,r.n):r.a/Math.max(1,arr[0].n))*45)}%"></i><em>${r.a}/${r.n}${ratio?" ("+Math.round(r.a/Math.max(1,r.n)*100)+"%)":""}</em></div>`).join("")}<p class="mut" style="margin:6px 0 0">${L("Az számít, hányan élték túl az adott országból; mellette az arány.","What counts is how many survived from a country; the ratio comes next to it.")}</p></div>`:"";
+function summarize(scope){ scope=scope||statsScope; const X=scoped(scope);
   const per={mariah:{j:0,o:0},wham:{j:0,o:0},feliz:{j:0,o:0}}, city={}, circ={}, daily=new Array(72).fill(0), elimOf={};
-  AD.elims.forEach(e=>{
+  X.elims.forEach(e=>{
     (elimOf[e.uid]??=new Set()).add(e.challenge); if(per[e.challenge]) per[e.challenge].o++;
     const c=(e.settlement||"?").trim(); city[c]=(city[c]||0)+1; circ[e.circumstance]=(circ[e.circumstance]||0)+1;
     const d=e.occurredAt?.toDate?.(); if(d&&d.getMonth()===11){const i=d.getDate()-1; const k=KEYS.indexOf(e.challenge); if(i>=0&&i<24&&k>=0) daily[i*3+k]++;}
   });
-  AD.parts.forEach(p=>(p.challenges||[]).forEach(k=>per[k]&&per[k].j++));
-  const active=AD.parts.filter(p=>(elimOf[p.uid]?.size||0)<(p.challenges?.length||1)).length;
-  const dh=AD.parts.filter(p=>p.mode==="diehard"&&!(elimOf[p.uid]?.size));
-  return {year:YEAR,t:Date.now(),players:AD.parts.length,active,elims:AD.elims.length,
-    classic:AD.parts.filter(p=>p.mode!=="diehard").length,diehard:AD.parts.filter(p=>p.mode==="diehard").length,
+  X.parts.forEach(p=>(p.challenges||[]).forEach(k=>per[k]&&per[k].j++));
+  const active=X.parts.filter(p=>(elimOf[p.uid]?.size||0)<(p.challenges?.length||1)).length;
+  const dh=X.parts.filter(p=>p.mode==="diehard"&&!(elimOf[p.uid]?.size));
+  const outM=new Set(X.elims.filter(e=>e.challenge==="mariah").map(e=>e.uid));
+  return {countries:scope==="world"?countryStats(X,outM):[],year:YEAR,t:Date.now(),players:X.parts.length,active,elims:X.elims.length,
+    classic:X.parts.filter(p=>p.mode!=="diehard").length,diehard:X.parts.filter(p=>p.mode==="diehard").length,
     multi:Object.values(elimOf).filter(x=>x.size>=2).length,per,city:topN(city,15),circ:topN(circ,10),daily,dhAlive:dh.length,_elimOf:elimOf,_dh:dh};
 }
-function buildMapSnap(){
+function buildMapSnap(scope){ scope=scope||mapScope; const X=scoped(scope);
   const g={};
-  AD.elims.forEach(e=>{
-    const c=(e.lat!=null&&e.lng!=null)?{lat:e.lat,lng:e.lng}:cityCoords(e.settlement); if(!c) return;
+  X.elims.forEach(e=>{
+    const c=(e.lat!=null&&e.lng!=null)?{lat:e.lat,lng:e.lng}:(cityCoords(e.settlement)||ccCoords(X.PC[e.uid])); if(!c) return;
     const o=(g[c.lat+","+c.lng]??={n:e.settlement,lat:c.lat,lng:c.lng,m:0,w:0,f:0}); o[CK[e.challenge]]++;
   });
-  const dz=[], cnt={}, sz=(AD.safes||[]).filter(z=>z.approved&&z.lat!=null).map(z=>({id:z.id,n:z.name,s:z.settlement,c:z.category,a:z.addr||"",lat:z.lat,lng:z.lng,rad:30,sg:z.songs||["mariah"],q:z.quiet||""}));
-  AD.elims.forEach(e=>{ if(e.zoneId) cnt[e.zoneId]=(cnt[e.zoneId]||0)+1; });
-  AD.dangers.filter(d=>d.approved).forEach(d=>{
+  const dz=[], cnt={}, sz=X.safes.filter(z=>z.approved&&z.lat!=null).map(z=>({id:z.id,n:z.name,s:z.settlement,c:z.category,a:z.addr||"",lat:z.lat,lng:z.lng,rad:30,sg:z.songs||["mariah"],q:z.quiet||""}));
+  X.elims.forEach(e=>{ if(e.zoneId) cnt[e.zoneId]=(cnt[e.zoneId]||0)+1; });
+  X.dangers.filter(d=>d.approved).forEach(d=>{
     let lat,lng;
     if(d.lat!=null&&d.lng!=null){ lat=d.lat; lng=d.lng; }
-    else { const c=cityCoords(d.settlement); if(!c) return; let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h); lat=c.lat+((h%7)-3)*0.004; lng=c.lng+(((h>>3)%7)-3)*0.006; }
+    else { const c=cityCoords(d.settlement)||ccCoords(X.PC[d.uid]); if(!c) return; let h=0; for(const ch of d.place) h=(h*31+ch.charCodeAt(0))|0; h=Math.abs(h); lat=c.lat+((h%7)-3)*0.004; lng=c.lng+(((h>>3)%7)-3)*0.006; }
     const n=cnt[d.id]||0;
     dz.push({id:d.id,p:d.place,s:d.settlement,c:d.category,sg:d.songs,r:d.riskLevel,note:d.note||"",lat,lng,rad:d.radius||0,l:d.loud||"",n,real:!!(n||d.real)});
   });
   return {year:YEAR,t:Date.now(),cells:Object.values(g),dz,sz};
 }
-function buildCollective(){
-  const out=new Set(AD.elims.filter(e=>e.challenge==="mariah").map(e=>e.uid)), towns={};
-  const eo={}; AD.elims.forEach(e=>{(eo[e.uid]??=new Set()).add(e.challenge)});
-  const out3=new Set(AD.parts.filter(p=>{const s=eo[p.uid]; if(!s) return false; return p.mode==="diehard"?s.size>0:s.has("feliz")}).map(p=>p.uid));
-  AD.parts.forEach(p=>{ const h=(p.home||"").trim(); if(!h) return; const o=(towns[h.toLowerCase()]??={l:h,n:0,a:0,a3:0}); o.n++; if(!out.has(p.uid)) o.a++; if(!out3.has(p.uid)) o.a3++; });
-  return {year:YEAR,t:Date.now(),reg:AD.parts.length,alive:AD.parts.filter(p=>!out.has(p.uid)).length,towns:Object.values(towns).sort((a,b)=>b.n-a.n).slice(0,40)};
+function buildCollective(scope){ scope=scope||statsScope; const X=scoped(scope);
+  const out=new Set(X.elims.filter(e=>e.challenge==="mariah").map(e=>e.uid)), towns={};
+  const eo={}; X.elims.forEach(e=>{(eo[e.uid]??=new Set()).add(e.challenge)});
+  const out3=new Set(X.parts.filter(p=>{const s=eo[p.uid]; if(!s) return false; return p.mode==="diehard"?s.size>=KEYS.length:s.has("feliz")}).map(p=>p.uid));
+  X.parts.forEach(p=>{ const h=(p.home||"").trim(); if(!h) return; const o=(towns[h.toLowerCase()]??={l:h,n:0,a:0,a3:0}); o.n++; if(!out.has(p.uid)) o.a++; if(!out3.has(p.uid)) o.a3++; });
+  return {countries:scope==="world"?countryStats(X,out):[],year:YEAR,t:Date.now(),reg:X.parts.length,alive:X.parts.filter(p=>!out.has(p.uid)).length,towns:Object.values(towns).sort((a,b)=>b.n-a.n).slice(0,40)};
 }
 async function publishSnapshots(){
   if(!isAdmin||!AD.loaded) return;
-  const {_elimOf,_dh,...snap}=summarize();
+  const {_elimOf,_dh,...snap}=summarize(statsScope);
   await setDoc(doc(db,"config","statsSnapshot"),snap);
-  await setDoc(doc(db,"config","mapSnapshot"),buildMapSnap());
-  await setDoc(doc(db,"config","collective"),buildCollective());
+  await setDoc(doc(db,"config","mapSnapshot"),buildMapSnap(mapScope));
+  await setDoc(doc(db,"config","collective"),buildCollective(statsScope));
   ls.set("snap_mapSnapshot"+YEAR,null); ls.set("snap_statsSnapshot"+YEAR,null); ls.set("snap_collective"+YEAR,null);
   loadCollective();
 }
@@ -1713,7 +1724,7 @@ function statsHtml(S,admin){
   <div class="card"><span class="mut">🎄 Hagyományos: <b>${S.classic}</b> · 🔥 Die Hard: <b>${S.diehard}</b><br>Több fronton is kiesett játékos: <b>${S.multi}</b> · Die Hardban még sehol nem esett ki: <b>${S.dhAlive}</b></span></div>
   <h2>Kiesések frontonként</h2><div class="card">${KEYS.map(k=>{const p=S.per[k],pct=p.j?Math.round(p.o/p.j*100):0;return `<div class="bar"><span class="l">${CH[k].ico} ${CH[k].short}</span><i style="width:${Math.max(2,pct*0.45)}%"></i><em>${p.o}/${p.j} (${pct}%)</em></div>`}).join("")}</div>
   <h2>Napi kiesések (dec. 1–24.)</h2><div class="card">${dailyChart(S.daily)}</div>
-  <h2>Települések versenye</h2>${townsHtml(true,admin?buildCollective():COLL)}
+  <h2>Települések versenye</h2>${townsHtml(true,admin?buildCollective(statsScope):COLL)}${S.countries&&S.countries.length>1?`<h2>${L('Országok','Countries')}</h2>${countriesBars(S.countries,false)}`:''}
   <h2>Legveszélyesebb települések</h2><div class="card">${bars(S.city)}</div>
   <h2>Legveszélyesebb helyzetek</h2><div class="card">${bars(S.circ)}</div>
   <p class="mut" style="text-align:center">Állapot: ${stamp(S.t)}${admin?" (élő, az admin adataiból)":" (néhány percenként frissül)"}</p>`+
@@ -1727,7 +1738,7 @@ function statsHtml(S,admin){
 function pageStats(b){
   if(isAdmin){
     if(!AD.loaded){ b.innerHTML="<p class='mut'>Betöltés…</p>"; loadAdminData(); return; }
-    const S=summarize(); b.innerHTML=statsHtml(S,true);
+    const S=summarize("world"); b.innerHTML=statsHtml(S,true);
     const upd=()=>{$("#plist").innerHTML=playersHtml(S)};
     $("#ps").oninput=e=>{pSearch=e.target.value;upd()}; $("#pm").onchange=e=>{pMode=e.target.value;upd()}; $("#pst").onchange=e=>{pStat=e.target.value;upd()};
     return;
@@ -1742,6 +1753,7 @@ function pageAdmin(b){
   if(!AD.loaded){b.innerHTML="<p class='mut'>Betöltés…</p>";loadAdminData();return}
   const pend=AD.dangers.filter(d=>!d.approved), ok=AD.dangers.filter(d=>d.approved);
   b.innerHTML=`<div class="card"><label class="chk"><input type="checkbox" id="pub" ${statsPublic?"checked":""}> <b>Statisztika nyilvános (bejelentkezett játékosoknak)</b></label><p class="mut" style="margin:0">A térkép mindenkinek látszik. A statisztika csak akkor, ha ezt bekapcsolod – és csak összesített számokat mutat.</p></div>
+  <div class="card"><h3>🌍 Térkép és statisztika hatóköre</h3><div class="row" style="gap:8px"><label style="flex:1">Térkép<select id="msc"><option value="hu" ${mapScope!=="world"?"selected":""}>Csak Magyarország</option><option value="world" ${mapScope==="world"?"selected":""}>Világtérkép</option></select></label><label style="flex:1">Statisztika<select id="ssc"><option value="hu" ${statsScope!=="world"?"selected":""}>Csak magyar</option><option value="world" ${statsScope==="world"?"selected":""}>Világszintű (+ országok versenye)</option></select></label></div><p class="mut" style="margin:6px 0 0">Mentés után kattints a „Térkép és statisztika közzététele” gombra, hogy a játékosok is lássák.</p><div class="mut" id="scmsg"></div></div>
   <div class="card"><label>Év</label><select id="yr">${YEARS.map(y=>`<option ${y===YEAR?"selected":""}>${y}</option>`).join("")}</select>
    <div class="mut">Játékosok: ${AD.parts.length} · Kiesések: ${AD.elims.length} · Kerülendő helyek: ${AD.dangers.length} (várakozik: ${pend.length})<br>Adatok betöltve: ${stamp(AD.t)}</div>
    <div class="row" style="margin-top:10px;gap:8px"><button id="refr">🔄 Adatok frissítése</button><button id="pubsnap" class="pri">📤 Térkép és statisztika közzététele</button><button id="csv">📊 CSV-export</button></div>
@@ -1756,6 +1768,8 @@ function pageAdmin(b){
   <h2>Jóváhagyott biztonságos helyek (${(AD.safes||[]).filter(z=>z.approved).length})</h2><div class="card feed">${(AD.safes||[]).filter(z=>z.approved).map(szRow).join("")||"<span class='mut'>Nincs adat.</span>"}</div>
   <h2>Jóváhagyott kerülendő helyek (${ok.length})</h2><div class="card feed">${ok.length?ok.map(d=>dzRow(d,false)).join(""):"<span class='mut'>Nincs adat.</span>"}</div>
   <h2>Kiesések moderálása (${AD.elims.length})</h2><div class="card feed">${AD.elims.length?[...AD.elims].sort((a,c)=>(c.occurredAt?.seconds||0)-(a.occurredAt?.seconds||0)).slice(0,100).map(e=>`<div class="row"><div><b>${esc(nameOf(e.uid))}</b> · ${CH[e.challenge]?.short} · ${esc(e.settlement)} (${esc(e.circumstance)}) – ${fmt(e.occurredAt)}</div><button class="sm" data-del-elim="${e.id}">Törlés</button></div>`).join(""):"<span class='mut'>Nincs adat.</span>"}</div>`;
+  const scSave=async()=>{ try{ const m=$("#msc").value,st=$("#ssc").value; await setDoc(doc(db,"config","public"),{mapScope:m,statsScope:st},{merge:true}); mapScope=m; statsScope=st; ls.set("snap_public"+YEAR,null); $("#scmsg").textContent="Mentve ✓"; }catch(e){ $("#scmsg").textContent=msg(e) } };
+  $("#msc").onchange=scSave; $("#ssc").onchange=scSave;
   $("#pub").onchange=async ev=>{try{await setDoc(doc(db,"config","public"),{statsPublic:ev.target.checked},{merge:true});statsPublic=ev.target.checked;ls.set("snap_public"+YEAR,null)}catch(e){alert(msg(e));ev.target.checked=!ev.target.checked}};
   newsAdminBind(b); adminUsersBind(b); doorsAdminBind(b); msgAdminBind(b);
   $("#yr").onchange=ev=>{YEAR=Number(ev.target.value);AD.loaded=false;subscribe();loadAdminData(true)};
@@ -1834,19 +1848,20 @@ onboarding._go=function(){
   ${userDoc?`<p>Üdv újra, <b>${esc(userDoc.nick)}</b>!</p>`:`<label>Becenév (ez lesz a neved)</label><input id="nick" maxlength="24" placeholder="pl. KarácsonyiMacska">`}
   <label>Játékmód</label>
   <div class="mode-grid"><button type="button" class="mode-card active" data-m="classic"><b>🎄 Hagyományos</b><span>Mariahrmageddonnal indulsz; kiesés után jön a Wham, majd a Feliz.</span></button>
-  <button type="button" class="mode-card" data-m="diehard"><b>🔥 Die Hard</b><span>Mindhárom fronton egyszerre indulsz.</span></button></div>
+  <button type="button" class="mode-card" data-m="diehard"><b>🔥 Die Hard</b><span>${L("Mindhárom geddont egyszerre játszod; ha az egyiket meghallod, csak abból esel ki.","You play all three geddons at once; if you hear one, you are only out of that one.")}</span></button></div>
   <label class="chk"><input type="checkbox" id="pubp" checked> <span>A nevem látszhat a csapatokban és a ranglistán</span></label>
-  <label>Lakóhely (település, nem kötelező – a települések versenyéhez)</label><input id="homet" list="clh" maxlength="60" placeholder="pl. Kecskemét"><datalist id="clh">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
+  <label>Lakóhely (település, nem kötelező – a települések versenyéhez)</label><input id="homet" list="clh" maxlength="60" placeholder="pl. Kecskemét"><a href="#" id="cmore" class="mut" style="font-size:.8rem">${L("🌍 Nem Magyarországon élsz?","🌍 Not living in Hungary?")}</a><div id="cwrap" hidden><label>${L("Ország","Country")}</label><select id="homec">${countryOptions("")}</select></div><datalist id="clh">${Object.keys(CITY).map(c=>`<option>${c}</option>`).join("")}</datalist>
   <label class="chk"><input type="checkbox" id="remb"> <span>📧 Küldjetek „Élsz még?” emlékeztetőt, ha 3 napig nem lépek be</span></label>
   <p class="mut">Az e-mail-címed soha nem jelenik meg nyilvánosan.</p>
   <div class="err" id="er"></div>
   <button class="pri wide" id="ok">Indulhat a túlélés!</button><button class="wide" style="margin-top:8px" id="out">Mégse / kilépés</button>`);
   document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll("[data-m]").forEach(x=>x.classList.toggle("active",x===b))});
   $("#out").onclick=()=>{closeModal();signOut(auth)};
+  { const isHu=v=>!v||Object.keys(CITY).some(c=>c.toLowerCase()===v.trim().toLowerCase()); $("#homet").addEventListener("input",()=>{ const v=$("#homet").value; if(!isHu(v)&&v.trim().length>=3){ $("#cwrap").hidden=false; $("#cmore").hidden=true } }); $("#cmore").onclick=e=>{ e.preventDefault(); $("#cwrap").hidden=false; $("#cmore").hidden=true } }
   $("#ok").onclick=async()=>{
     const nick=userDoc?userDoc.nick:$("#nick").value.trim(), key=userDoc?userDoc.nickKey:slug(nick);
     if(nick.length<3||key.length<3) return $("#er").textContent="A becenév legalább 3 (betű vagy szám) karakter legyen.";
-    const pub=$("#pubp").checked, wantRem=$("#remb").checked, homeV=$("#homet").value.trim().slice(0,60), chs=mode==="diehard"?[...KEYS]:["mariah"];
+    const pub=$("#pubp").checked, wantRem=$("#remb").checked, homeV=$("#homet").value.trim().slice(0,60), cV=($("#homec")?.value||"").slice(0,2), chs=mode==="diehard"?[...KEYS]:["mariah"];
     try{
       await runTransaction(db,async t=>{
         if(!userDoc){
@@ -1855,7 +1870,7 @@ onboarding._go=function(){
           t.set(nr,{uid:user.uid});
           t.set(doc(db,"users",user.uid),{nick,nickKey:key,email:(user.email||"").toLowerCase(),createdAt:serverTimestamp()});
         }
-        t.set(doc(db,"participations",`${YEAR}_${user.uid}`),{uid:user.uid,year:YEAR,nick:pub?nick:"Rejtőzködő túlélő",mode,challenges:chs,publicProfile:pub,...(homeV?{home:homeV}:{}),joinedAt:serverTimestamp()});
+        t.set(doc(db,"participations",`${YEAR}_${user.uid}`),{uid:user.uid,year:YEAR,nick:pub?nick:"Rejtőzködő túlélő",mode,challenges:chs,publicProfile:pub,...(homeV?{home:homeV}:{}),...(cV&&cV!=="HU"?{country:cV}:{}),joinedAt:serverTimestamp()});
       });
       { const rf=ls.get("pendingRef",null); if(rf&&rf!==user.uid){ try{ await setDoc(doc(db,"referrals",`${YEAR}_${user.uid}`),{ref:rf,year:YEAR,uid:user.uid,at:serverTimestamp()}); }catch(e){ console.warn(e) } } ls.set("pendingRef",null); }
       userDoc=userDoc||{nick,nickKey:key}; closeModal(); render(); if(wantRem) setReminder(true).catch(console.error); setTimeout(checkPendingTeam,800);
@@ -2160,7 +2175,7 @@ const SCOPE_TXT={mariah:"Csak Mariahrmageddon",all:"Mindhárom kihívás"};
 function memberStat(m,scope){
   const o=m.outs||{}, b=bounds(); let all=null;
   if(scope==="mariah") all=o.mariah||null;
-  else if(m.mode==="diehard"){ const v=KEYS.map(k=>o[k]).filter(Boolean); all=v.length?Math.min(...v):null; }
+  else if(m.mode==="diehard"){ all=KEYS.every(k=>o[k])?Math.max(...KEYS.map(k=>o[k])):null; }
   else all=o.feliz||null;
   const end=all||Math.min(nowDate().getTime(),b.end.getTime());
   return {alive:!all,days:Math.max(0,(end-b.start.getTime())/DAY),outsN:Object.keys(o).length};
@@ -2180,7 +2195,7 @@ function teamMini(t){
 function pageTeams(b){
   if(!user||!myPart){ b.innerHTML=`<div class="card"><p>A csapatokhoz előbb lépj be, és állítsd be a játékmódodat.</p><button class="pri" id="tl">Tovább</button></div>`; $("#tl").onclick=()=>{closePage();user?onboarding():loginModal()}; return }
   b.innerHTML=`<div class="illus">${IL.team()}</div><div class="card"><h3>👥 Hívd meg a barátaidat</h3><p class="mut" style="margin:0 0 8px">Versenyezzetek, ki éli túl tovább! Hozz létre egy csapatot, és küldd el a meghívó linkjét.</p>
-   <label>Csapat neve</label><input id="tn" maxlength="30" placeholder="pl. Irodai túlélők"><label>Mit mérjen a csapat versenye?</label><label class="chk"><input type="radio" name="tsc" value="mariah" checked> <span><b>Csak a Mariahrmageddont</b> – a főjáték; mindenki egyenlő eséllyel indul.</span></label><label class="chk"><input type="radio" name="tsc" value="all"> <span><b>Mindhárom kihívást</b> – hagyományos játékosnál a lánc vége (Feliz) számít, Die Hard játékosnál az első kiesés. Ez utóbbiak hátrányban vannak, de ez van.</span></label><button class="pri wide" id="tc">Csapat létrehozása</button><div class="err" id="terr"></div></div>
+   <label>Csapat neve</label><input id="tn" maxlength="30" placeholder="pl. Irodai túlélők"><label>Mit mérjen a csapat versenye?</label><label class="chk"><input type="radio" name="tsc" value="mariah" checked> <span><b>Csak a Mariahrmageddont</b> – a főjáték; mindenki egyenlő eséllyel indul.</span></label><label class="chk"><input type="radio" name="tsc" value="all"> <span>${L("<b>Mindhárom kihívást</b> – a játékos akkor esik ki a csapatversenyből, ha mindhárom frontról kiesett: hagyományos módban a lánc végén (Feliz), Die Hardban bármilyen sorrendben. Egy front elvesztése még nem a vége.","<b>All three challenges</b> – a player is out of the team contest once they are out of all three fronts: at the end of the chain (Feliz) in Traditional mode, in any order in Die Hard. Losing one front is not the end.")}</span></label><button class="pri wide" id="tc">Csapat létrehozása</button><div class="err" id="terr"></div></div>
    <div class="card"><label>Kaptál meghívó kódot? (6 karakter)</label><input id="tj" maxlength="6" style="text-transform:uppercase"><button class="wide" id="tjb">Csatlakozás kóddal</button></div>
    <div class="card"><button class="wide" id="tinv">📤 Általános meghívó küldése (csapat nélkül)</button></div>
    <h2>Csapataid</h2>${TEAMS===null?"<p class='mut'>Betöltés…</p>":(TEAMS.length?TEAMS.map(teamCard).join(""):`<div class="empty">${ico("snowman")}Még nem vagy egy csapatban sem.</div>`)}
