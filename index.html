@@ -814,7 +814,7 @@ function bindCollective(b){
   b.querySelector("#tshare")?.addEventListener("click",()=>fbShare(`Melyik település bírja tovább? Add meg a lakóhelyed, és versenyezzünk!\n${SHARE_PAGE("telepulesek.html")}\n\n${MOTTO}`,"#mariahrmageddon",SHARE_PAGE("telepulesek.html")));
 }
 function teamsContestHtml(){ const T=COLL&&COLL.teams; if(!T||!T.length) return "";
-  return `<h2>${L("Csapatok versenye","Teams contest")}</h2><div class="card">${T.map((t,i)=>{ const rk=1+T.filter(q=>q.a>t.a||(q.a===t.a&&q.a/q.n>t.a/t.n)).length; return `<div class="row"><span>${rk}. <b>${esc(t.name)}</b> <span class="mut">(${L(t.scope==="mariah"?"csak Mariah":"mindhárom",t.scope==="mariah"?"Mariah only":"all three")})</span></span><span class="mut">${t.a}/${t.n} ${L("bent","alive")}</span></div>` }).join("")}<p class="mut" style="margin:6px 0 0">${L("Az számít, hány csapattag van még bent; egyenlő számnál az arány dönt (5/5 jobb, mint 5/10). A csapatok a saját versenyszámuk szerint szerepelnek.","What counts is how many team members are still in; with an equal count the ratio decides (5/5 beats 5/10). Teams are scored by their own contest type.")}</p></div>`; }
+  return `<h2>${L("Csapatok versenye","Teams contest")}</h2><div class="card">${T.map((t,i)=>{ const rk=teamRank(T,t); return `<div class="row"><span>${rk}. <b>${esc(t.name)}</b> <span class="mut">(${L(t.scope==="mariah"?"csak Mariah":"mindhárom",t.scope==="mariah"?"Mariah only":"all three")})</span></span><span class="mut">${t.a}/${t.n} ${L("bent","alive")} (${Math.round(t.a/t.n*100)}%)</span></div>` }).join("")}<p class="mut" style="margin:6px 0 0">${L("Az arány számít: hány százalékuk van még bent (4/5 jobb, mint 5/10), így a nagy csapatoknak nincs előnyük. Egyenlő aránynál az a csapat áll előrébb, amelyiknek a legtovább játékban lévő tagja tovább bírta (nem mindenki indult dec. 1-jén); ha mindenki kiesett, a legtovább bent maradt tag dönt. A csapatok a saját versenyszámuk szerint szerepelnek.","What counts is the ratio of members still in (4/5 beats 5/10), so big teams get no advantage. With an equal ratio the team whose longest-playing member lasted longer ranks higher (not everyone started on Dec 1); if everyone is out, the longest-lasting member decides. Teams are scored by their own contest type.")}</p></div>`; }
 function pageContests(b){
   if(user&&myPart&&TEAMS==null) loadTeams();
   b.innerHTML=collectiveHtml(false)+townsHtml(true)+(COLL&&COLL.countries&&COLL.countries.length>1?`<h2>${L('Országok versenye','Countries contest')}</h2>${countriesBars([...COLL.countries].sort((x,y)=>y.a-x.a||y.n-x.n),true)}`:'')+teamsContestHtml()+`<div class="card"><h3>${ico("users")} Baráti csapatok</h3>${!user||!myPart?`<p class="mut" style="margin:0 0 8px">Belépve itt látod a csapataid állását.</p>`:TEAMS==null?`<p class="mut">Betöltés…</p>`:TEAMS.length?TEAMS.map(teamMini).join(""):`<p class="mut" style="margin:0 0 8px">Még nem vagy egy csapatban sem.</p>`}<button class="sm" data-go="teams">Barátok és csapatok →</button></div>`;
@@ -1638,7 +1638,7 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="adatkezeles.html">Adatkezelési tájékoztató</a> · <a href="aszf.html">ÁSZF</a> · <a href="impresszum.html">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v17 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v18 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
@@ -1691,7 +1691,7 @@ function buildCollective(scope){ scope=scope||statsScope; const X=scoped(scope);
   const eo={}; X.elims.forEach(e=>{(eo[e.uid]??=new Set()).add(e.challenge)});
   const out3=new Set(X.parts.filter(p=>{const s=eo[p.uid]; if(!s) return false; return p.mode==="diehard"?s.size>=KEYS.length:s.has("feliz")}).map(p=>p.uid));
   X.parts.forEach(p=>{ const h=(p.home||"").trim(); if(!h) return; const o=(towns[h.toLowerCase()]??={l:h,n:0,a:0,a3:0}); o.n++; if(!out.has(p.uid)) o.a++; if(!out3.has(p.uid)) o.a3++; });
-  return {teams:(AD.teams||[]).map(teamScore).filter(t=>t.n>=2).sort((x,y)=>y.a-x.a||(y.a/y.n)-(x.a/x.n)||y.n-x.n).slice(0,10),countries:scope==="world"?countryStats(X,out):[],year:YEAR,t:Date.now(),reg:X.parts.length,alive:X.parts.filter(p=>!out.has(p.uid)).length,towns:Object.values(towns).sort((a,b)=>b.n-a.n).slice(0,40)};
+  return {teams:(AD.teams||[]).map(teamScore).filter(t=>t.n>=2).sort(teamCmp).slice(0,10),countries:scope==="world"?countryStats(X,out):[],year:YEAR,t:Date.now(),reg:X.parts.length,alive:X.parts.filter(p=>!out.has(p.uid)).length,towns:Object.values(towns).sort((a,b)=>b.n-a.n).slice(0,40)};
 }
 async function publishSnapshots(){
   if(!isAdmin||!AD.loaded) return;
@@ -2130,8 +2130,8 @@ function inviteSheet(code){
 }
 const ALPH="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode=()=>Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>ALPH[b%ALPH.length]).join("");
-const myEntry=()=>({nick:myPart.nick,mode:myPart.mode,outs:Object.fromEntries(myElims().map(e=>[e.challenge,e.occurredAt.toDate().getTime()]))});
-const sameEntry=(a,b)=>!!a&&a.nick===b.nick&&a.mode===b.mode&&JSON.stringify(Object.entries(a.outs||{}).sort())===JSON.stringify(Object.entries(b.outs||{}).sort());
+const myEntry=()=>({nick:myPart.nick,mode:myPart.mode,since:Math.max(myPart.joinedAt?.toDate?.().getTime()||0,bounds().start.getTime()),outs:Object.fromEntries(myElims().map(e=>[e.challenge,e.occurredAt.toDate().getTime()]))});
+const sameEntry=(a,b)=>!!a&&a.nick===b.nick&&a.mode===b.mode&&a.since===b.since&&JSON.stringify(Object.entries(a.outs||{}).sort())===JSON.stringify(Object.entries(b.outs||{}).sort());
 async function loadTeams(force){
   if(!user||!myPart||teamsLoading) return; if(TEAMS&&!force) return;
   teamsLoading=true;
@@ -2187,12 +2187,14 @@ function memberStat(m,scope){
   else all=o.feliz||null;
   const end=all||Math.min(nowDate().getTime(),b.end.getTime());
   const fronts=scope==="mariah"?(o.mariah?0:1):Math.max(0,KEYS.length-Object.keys(o).length);
-  return {alive:!all,fronts,days:Math.max(0,(end-b.start.getTime())/DAY),outsN:Object.keys(o).length};
+  return {alive:!all,fronts,days:Math.max(0,(end-Math.max(m.since||0,b.start.getTime()))/DAY),outsN:Object.keys(o).length};
 }
 const memberCmp=(a,c)=>a.st.alive!==c.st.alive?(a.st.alive?-1:1):a.st.alive?(c.st.fronts-a.st.fronts):(Math.abs(c.st.days-a.st.days)<1e-6?0:c.st.days-a.st.days);
 const rankOf=(rows,i)=>1+rows.filter(r=>memberCmp(r,rows[i])<0).length;
 const fronts_txt=st=>st.alive?L(`${st.fronts} front él`,`${st.fronts} ${st.fronts===1?"front":"fronts"} alive`):L("kiesett","out");
-function teamScore(t){ const rows=Object.values(t.members||{}).map(m=>memberStat(m,t.scope||"all")); const n=rows.length,a=rows.filter(r=>r.alive).length; return {name:t.name,scope:t.scope||"all",n,a}; }
+function teamScore(t){ const rows=Object.values(t.members||{}).map(m=>memberStat(m,t.scope||"all")); const n=rows.length,a=rows.filter(r=>r.alive).length; return {name:t.name,scope:t.scope||"all",n,a,d:Math.round(Math.max(0,...rows.map(r=>r.days))*100)/100}; }
+const teamCmp=(x,y)=>{ const r=y.a*x.n-x.a*y.n; return r!==0?r:(Math.abs(y.d-x.d)<1e-6?0:y.d-x.d); };
+const teamRank=(T,t)=>1+T.filter(q=>teamCmp(q,t)<0).length;
 function teamCard(t){
   const rows=Object.entries(t.members||{}).map(([uid,m])=>({uid,m,st:memberStat(m,t.scope||"all")}))
     .sort(memberCmp);
