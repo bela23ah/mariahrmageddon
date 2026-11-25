@@ -1654,7 +1654,7 @@ function pageAbout(b){
   b.innerHTML=`<div class="card"><h3>Karácsonyi Túlélőközpont ${YEAR}</h3><p>A Kecskeméti Fiatalok Társaságának karácsonyi túlélőjátékaihoz készült bejelentő- és statisztikaoldal: Mariahrmageddon, Whamageddon, Feliznavidageddon.</p>
   <p><a class="btn fb" href="${esc(FB_PAGE_URL)}" target="_blank" rel="noopener">Szervező: ${esc(FB_PAGE_SHOW)}</a></p><p><a class="btn" href="${esc(REDDIT_URL)}" target="_blank" rel="noopener">${L("Reddit-közösség: r/Mariahrmageddon","Reddit community: r/Mariahrmageddon")}</a></p><p><a class="btn" href="${esc(VIDEO_URL)}" target="_blank" rel="noopener">▶ Szabálymagyarázó videó</a></p><p class="mut">${esc(MOTTO)}</p></div>
   <div class="card"><h3>Adatkezelés röviden</h3><ul style="padding-left:1.1em;margin:.3em 0"><li>Tároljuk a becenevedet, a játékmódodat és a bejelentett kiesések adatait (időpont, település, körülmény, opcionális történet).</li><li>Részletek: <a href="${LANG==='en'?'privacy.html':'adatkezeles.html'}">Adatkezelési tájékoztató</a> · <a href="${LANG==='en'?'terms.html':'aszf.html'}">ÁSZF</a> · <a href="${LANG==='en'?'imprint.html':'impresszum.html'}">Impresszum</a>.</li><li>A belépéshez használt e-mail-cím a Firebase Authenticationben van, a játékadatok között nem szerepel, és nem nyilvános.</li><li>A kiesés-bejelentés nem tartalmazza a nevedet. A nyilvános térkép és statisztika csak összesített számokat mutat. A csapatodban és a ranglistán a becenevedet látják (ha engedélyezted).</li><li>Ha kéred az „Élsz még?” emlékeztetőt, az e-mail-címedet külön, csak erre a célra tároljuk; bármikor kikapcsolhatod.</li><li>A hely kb. 1 km-re kerekítve tárolódik, vagy csak a település neve.</li><li>A fiókod és adataid bármikor törölhetők a Profilomban.</li></ul></div>
-  <p class="mut" style="text-align:center">v23 · ${YEAR}</p>`;
+  <p class="mut" style="text-align:center">v24 · ${YEAR}</p>`;
 }
 
 /* ---------- Statisztika + Admin ---------- */
@@ -2088,7 +2088,7 @@ function drawPostcard(cv,k,e){
   ctx.fillStyle="#e2e8f0"; ctx.font="500 30px system-ui,sans-serif"; ctx.fillText(`„${c.artist}: ${c.song}”`,W/2,750);
   ctx.fillStyle="rgba(255,255,255,0.08)"; ctx.fillRect(100,815,W-200,240);
   ctx.fillStyle="#fff"; ctx.font="600 30px system-ui,sans-serif";
-  const li=(n,t,y,col)=>{ const w=ctx.measureText(t).width; ctx.fillStyle=col; ctx.fillText(t,W/2+22,y); cIco(ctx,n,W/2+22-w/2-52,y-34,38,col,2); };
+  const li=(n,t,y,col)=>{ const w=ctx.measureText(LANG==="en"?tr(t):t).width; ctx.fillStyle=col; ctx.fillText(t,W/2+22,y); cIco(ctx,n,W/2+22-w/2-52,y-34,38,col,2); };
   ctx.textAlign="center"; li("cal",occ.toLocaleString(LOC,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}),885,"#fff");
   li("pin",`${e.settlement}${e.place?" – "+e.place:""}`,945,"#fff");
   li("phones",e.circumstance,1005,"#cbd5e1");
