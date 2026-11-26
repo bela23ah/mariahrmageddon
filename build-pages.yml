@@ -1,0 +1,26 @@
+name: Build landing pages
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - tools/landings.py
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Generate pages, sitemap, robots
+        run: OUT=. APP=index.html python tools/landings.py
+      - name: Commit changes
+        run: |
+          git config user.name "pages-builder"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || (git commit -m "Auto-build landing pages" && git push)
